@@ -11,27 +11,27 @@ main_comparison:
       opp_family_0: balanced
       opp_family_1: balanced
     - label: "ev_static_vs_balanced"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: balanced
       opp_family_1: balanced
     - label: "ev_belief_vs_balanced"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: balanced
       opp_family_1: balanced
     - label: "ev_belief_vs_aggressive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: aggressive
       opp_family_1: balanced
     - label: "ev_belief_vs_passive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: passive
       opp_family_1: balanced
     - label: "ev_static_vs_aggressive"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: aggressive
       opp_family_1: balanced
@@ -42,17 +42,17 @@ calibration:
   hands_per_seed: 500
   matchups:
     - label: "belief_calibration_balanced"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: balanced
       opp_family_1: balanced
     - label: "belief_calibration_aggressive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: aggressive
       opp_family_1: balanced
     - label: "belief_calibration_maniac"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: maniac
       opp_family_1: balanced
@@ -63,22 +63,22 @@ robustness:
   hands_per_seed: 1000
   matchups:
     - label: "ev_belief_vs_held_out_1"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: held_out_1
       opp_family_1: balanced
     - label: "ev_belief_vs_held_out_2"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: held_out_2
       opp_family_1: balanced
     - label: "ev_static_vs_held_out_1"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: held_out_1
       opp_family_1: balanced
     - label: "ev_static_vs_held_out_2"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       agent1: {name: HeuristicAgent, label: heuristic}
       opp_family_0: held_out_2
       opp_family_1: balanced
@@ -99,17 +99,17 @@ belief_ablation:
   hands_per_seed: 1000
   matchups:
     - label: "belief_vs_static_balanced"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
-      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       opp_family_0: balanced
       opp_family_1: balanced
     - label: "belief_vs_static_aggressive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
-      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       opp_family_0: aggressive
       opp_family_1: balanced
     - label: "belief_vs_static_trappy"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 200, prior: uniform, smoothing: 0.05}
-      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 200, prior: uniform}
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
       opp_family_0: trappy
       opp_family_1: balanced

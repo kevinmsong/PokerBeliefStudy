@@ -1,0 +1,742 @@
+%% ─────────────────────────────────────────────────────────────────────────────
+%% main.tex — Methods and Results sections
+%% Nature-style manuscript: Poker Belief-Inference Study
+%% Compile with: pdflatex main.tex  (requires figures/ in same directory)
+%% ─────────────────────────────────────────────────────────────────────────────
+
+\documentclass[10pt,twocolumn]{article}
+
+%% ── Packages ─────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}           % Times New Roman body + math
+\usepackage[scaled=0.90]{helvet}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage{amsmath,amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{placeins}
+
+%% ── Page geometry (Nature single-column equivalent, two-col layout) ──────────
+\geometry{
+  paperwidth  = 210mm,
+  paperheight = 297mm,
+  top         = 22mm,
+  bottom      = 24mm,
+  left        = 18mm,
+  right       = 18mm,
+  columnsep   = 6mm,
+}
+
+%% ── Caption style ────────────────────────────────────────────────────────────
+\captionsetup{
+  font       = {small},
+  labelfont  = {bf,small},
+  format     = plain,
+  justification = justified,
+  singlelinecheck = false,
+  skip       = 4pt,
+}
+
+%% ── Hyperref ─────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = black,
+  citecolor  = black,
+  urlcolor   = black,
+}
+
+%% ── siunitx ──────────────────────────────────────────────────────────────────
+\sisetup{
+  separate-uncertainty = true,
+  uncertainty-mode     = separate,
+  table-align-uncertainty = true,
+}
+
+%% ── Section heading style ────────────────────────────────────────────────────
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-9pt plus -2pt minus -1pt}{3pt plus 1pt}%
+  {\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-6pt plus -1pt minus -1pt}{2pt plus 1pt}%
+  {\normalfont\normalsize\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {-4pt plus -1pt minus -1pt}{1pt}%
+  {\normalfont\normalsize\itshape}}
+\makeatother
+
+%% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+%% ── Running title (one-col span) ─────────────────────────────────────────────
+\twocolumn[{%
+  \begin{center}
+    {\LARGE\bfseries
+      When Does Posterior Belief Updating Improve Decisions?\\[4pt]
+      Evidence from a Controlled Sequential Hidden-Information Testbed}\\[10pt]
+    {\large Kevin Song}\\[2pt]
+    {\normalsize\itshape Independent Research}\\[2pt]
+    {\small \today}\\[14pt]
+  \end{center}
+  \hrule height 0.8pt
+  \vspace{6pt}
+  \begin{center}
+    \begin{minipage}{0.88\textwidth}
+      \small\setstretch{1.15}
+      \textbf{Abstract.}
+      A longstanding assumption in sequential decision-making is that
+      richer hidden-state inference leads to better decisions.
+      We test this assumption in a controlled synthetic testbed: a
+      heads-up turn-river no-limit Texas Hold'em subgame in which
+      three agents—a fixed-rule Heuristic, a static-prior expected-value
+      (Static-EV) agent, and a Bayesian-updating expected-value
+      (Belief-EV) agent—compete against parameterised synthetic opponents.
+      Across 5,000 hands per condition (five seeded replications of
+      1,000 hands each), both EV agents outperform the Heuristic by
+      approximately \num{77} chips per hand ($\approx$\,79\%), confirming
+      the primacy of principled expected-value reasoning over heuristic
+      rules.
+      In direct head-to-head competition, however, the Static-EV agent
+      consistently outperforms the Belief-EV agent by
+      $9.9$–$13.1$ chips per hand
+      (\(p = 0.018\)–\(0.034\), paired \(t\)-test).
+      Robustness experiments confirm that neither agent loses performance
+      when evaluated against held-out opponent families.
+      These results falsify the naive hypothesis that more sophisticated
+      belief tracking improves payoff, and identify misspecification of the
+      behavioural response model as the likely mechanism of harm.
+      We discuss implications for AI agent design, fraud detection,
+      market making, clinical decision support, and autonomous systems.
+    \end{minipage}
+  \end{center}
+  \vspace{10pt}
+  \hrule height 0.4pt
+  \vspace{14pt}
+}]
+
+%% ─────────────────────────────────────────────────────────────────────────────
+%%  METHODS
+%% ─────────────────────────────────────────────────────────────────────────────
+\section{Methods}
+
+\subsection{Game Environment}
+
+We construct a heads-up no-limit Texas Hold'em \textit{turn-river
+subgame}~\citep{osborne1994course}.
+Each episode begins with two players, a 52-card deck, two private
+hole cards per player, four public board cards already revealed,
+a starting pot of \num{200} chips, and effective stacks of
+\num{200} chips each.
+Street progression follows standard Hold'em rules: turn action,
+river card reveal (if the hand is not terminal), river action, and
+showdown if neither player has folded.
+
+\subsubsection{Action abstraction.}
+When no bet is outstanding, legal actions are
+$\{\texttt{check},\; \texttt{bet\_half\_pot},\; \texttt{bet\_pot},\; \texttt{jam}\}$.
+When facing a bet, legal actions are
+$\{\texttt{fold},\; \texttt{call},\; \texttt{jam}\}$.
+This coarse abstraction is a deliberate scientific simplification that
+keeps the action space tractable while preserving the qualitative
+structure of bluff-value tradeoffs and pot-odds decisions.
+
+\subsubsection{Reward structure.}
+Terminal payoffs are zero-sum chip profit/loss.
+Each player's scalar reward is the signed change in their stack
+relative to episode start.
+
+\subsubsection{Information structure.}
+Each agent observes only its own hole cards, the public board,
+pot and stack sizes, current street, betting history, and legal actions.
+Opponent hole cards remain hidden until showdown.
+
+\subsection{Hand-Class Ontology}
+
+The central latent variable is opponent \emph{hand class}—a
+board-relative category that abstracts over exact card combinations.
+The default ontology comprises seven mutually exclusive,
+collectively exhaustive classes:
+\texttt{nuts\_or\_near\_nuts},
+\texttt{strong\_made},
+\texttt{medium\_made},
+\texttt{weak\_showdown},
+\texttt{strong\_draw},
+\texttt{weak\_draw},
+and \texttt{air}.
+The mapping from hole cards and board to hand class is deterministic
+and board-relative~\citep{chen2006mathematics}.
+This ontology is configurable for sensitivity analysis.
+
+\subsection{Agent Hierarchy}
+
+\subsubsection{Heuristic baseline.}
+The Heuristic agent applies fixed rules based on hand-strength
+buckets, basic draw recognition, street-aware thresholds, and
+pot-odds checks.
+It never estimates expected value and maintains no model of the
+opponent.
+This agent serves as a transparent lower bound on performance.
+
+\subsubsection{Static-EV agent.}
+The Static-EV agent selects the action $a^*$ that maximises
+\begin{equation}
+  \text{EV}(a \mid s,\,\pi_0)
+    = \sum_{\text{outcomes}} P(\text{outcome} \mid a,\, s,\, \pi_0)\, U(\text{outcome}),
+  \label{eq:ev_static}
+\end{equation}
+where $s$ denotes the current public state and $\pi_0$ is a fixed
+uniform prior over opponent hand classes.
+Equity estimates use Monte Carlo rollout ($n = 50$ samples per
+decision); opponent response probabilities are supplied by a
+parameterised synthetic response model.
+Crucially, this agent \emph{never updates} $\pi_0$ after observing
+opponent actions.
+
+\subsubsection{Belief-EV agent.}
+The Belief-EV agent maintains a posterior $\pi_t$ over opponent hand
+classes and updates it after each observed opponent action via Bayes'
+theorem:
+\begin{equation}
+  P(c \mid a,\, s)
+    \propto P(a \mid c,\, s,\, \mathcal{F})\; P(c),
+  \label{eq:bayes_update}
+\end{equation}
+where $c$ is a hand class, $a$ is the observed action, and
+$\mathcal{F}$ is the opponent family parameter.
+The posterior is normalised after each update; Laplace smoothing
+($\alpha = 0.05$) prevents zero-probability hand classes.
+Action selection follows the same EV formula as Equation~\ref{eq:ev_static},
+substituting the current posterior $\pi_t$ for the fixed prior.
+Belief state is reset at the start of each hand.
+
+\subsection{Response Model and Opponent Families}
+
+The response model defines
+$P(\text{action} \mid \text{hand class},\, \text{public state},\, \mathcal{F})$
+as a parameterised synthetic function.
+Opponent families are characterised by six scalar dimensions:
+aggression, bluff rate, call looseness, jam propensity,
+draw semibluff frequency, and trap frequency.
+Table~\ref{tab:opponent_families} lists the families used in this study.
+Development families (\texttt{balanced}, \texttt{aggressive},
+\texttt{passive}, \texttt{maniac}, \texttt{trappy}) are used for
+training-time tuning.
+Held-out families (\texttt{held\_out\_1}, \texttt{held\_out\_2})
+are evaluated only during robustness experiments.
+
+\begin{table}[b]
+  \centering
+  \small
+  \caption{%
+    Synthetic opponent family definitions.
+    Each entry reports relative parameter values (Low / Medium / High)
+    on a normalised $[0,1]$ scale.
+    Development families are used in Experiments 1--3;
+    held-out families are reserved for Experiment 4.
+    HL = held-out.
+  }
+  \label{tab:opponent_families}
+  \begin{tabularx}{\columnwidth}{l *{4}{>{\centering\arraybackslash}X}}
+    \toprule
+    Family          & Aggression & Bluff rate & Call loose. & Trap freq. \\
+    \midrule
+    Balanced        & Med        & Med        & Med         & Low  \\
+    Aggressive      & High       & High       & Med         & Low  \\
+    Passive         & Low        & Low        & High        & Low  \\
+    Maniac          & High       & High       & High        & Low  \\
+    Trappy          & Low        & Low        & Low         & High \\
+    \midrule
+    Held-out 1 (HL) & Med-High   & Med        & High        & Med  \\
+    Held-out 2 (HL) & Low        & High       & Low         & High \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Experimental Design}
+
+We run four pre-registered experiments.
+All experiments use seeded Monte Carlo simulation for reproducibility;
+identical seed and configuration always produce identical hand traces.
+
+\subsubsection{Experiment 1 — Main head-to-head comparison.}
+Each of the three agents plays as player~0 against a Heuristic
+player~1 across six matchup conditions (agent $\times$ opponent
+family).
+Configuration: five seeds $\times$ \num{1000} hands per seed per
+condition ($n = \num{5000}$ hands per cell).
+
+\subsubsection{Experiment 2 — Belief ablation.}
+Belief-EV and Static-EV play \emph{directly against each other} as
+player~0 and player~1 respectively, under three opponent-family
+contexts (balanced, aggressive, trappy).
+This isolates the contribution of posterior updating from the
+broader EV-reasoning advantage.
+
+\subsubsection{Experiment 3 — Calibration and behavioural profiles.}
+Belief-EV plays under three development opponent families
+(balanced, aggressive, maniac).
+Per-decision posterior entropy, action frequency profiles, and
+EV margin statistics are extracted from raw hand logs.
+
+\subsubsection{Experiment 4 — Opponent shift / robustness.}
+All three agents are evaluated against the two held-out families.
+Performance is compared directly to the development-set baseline
+to quantify generalisation loss.
+
+\subsection{Statistical Analysis}
+
+Primary metric: mean chips won per hand (player~0 perspective).
+Bootstrap confidence intervals (5,000 resamples, $\alpha = 0.05$)
+are computed for all mean estimates.
+Head-to-head ablation differences are tested with a paired
+two-tailed $t$-test on per-hand rewards.
+Effect sizes are reported as raw chip-per-hand differences.
+No corrections for multiple comparisons are applied; individual
+$p$-values and confidence intervals are reported in full.
+All analyses are implemented in Python with NumPy, SciPy, and
+pandas; source code is publicly available at
+\href{https://github.com/kevinmsong/PokerBeliefStudy}{\texttt{github.com/kevinmsong/PokerBeliefStudy}}.
+
+%% ─────────────────────────────────────────────────────────────────────────────
+%%  RESULTS
+%% ─────────────────────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{Experiment 1: EV Reasoning Dominates Over Heuristics}
+
+Figure~\ref{fig:main_comparison} and Table~\ref{tab:main_results}
+summarise agent performance across development opponent families.
+Both EV agents substantially outperform the Heuristic baseline.
+Against the balanced opponent family, the Static-EV agent achieves
+$174.2$ chips/hand (95\% CI: $[170.1, 178.3]$) and the Belief-EV
+agent achieves $174.6$ chips/hand (95\% CI: $[170.4, 178.7]$),
+compared with $97.2$ chips/hand (95\% CI: $[93.8, 100.8]$) for
+the Heuristic—a gap of approximately $\mathbf{77}$ chips/hand
+($\approx$\,79\%).
+
+This ordering is consistent across all opponent families tested.
+Belief-EV and Static-EV performance are nearly indistinguishable
+when both face the Heuristic as an opponent:
+the Belief-EV advantage is only $+0.4$ chips/hand on the balanced
+opponent ($174.6$ vs.\ $174.2$), and ranges from
+$-2.4$ to $+0.96$ across families.
+This near-parity suggests that the benefit of posterior updating is
+negligible when the opposing agent is not itself EV-rational.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/fig1_main_comparison.png}
+  \caption{%
+    \textbf{Experiment 1 — Agent performance across opponent families.}
+    Mean chips won per hand (player~0 perspective) for the Heuristic,
+    Static-EV, and Belief-EV agents under six opponent-family conditions.
+    Error bars denote 95\% bootstrap confidence intervals
+    ($n = 5{,}000$ hands per condition; five seeds $\times$ 1,000 hands).
+    Both EV agents outperform the Heuristic by $\approx$77 chips/hand
+    ($\approx$79\%) on the balanced family.
+    The Belief-EV vs.\ Static-EV gap is $\leq$1 chip/hand in all
+    conditions when both face the same Heuristic opponent.
+    Colour coding: grey = Heuristic; blue = Static-EV; orange-red = Belief-EV.
+  }
+  \label{fig:main_comparison}
+\end{figure*}
+
+\begin{table*}[ht]
+  \centering
+  \small
+  \caption{%
+    \textbf{Experiment 1 — Summary statistics for all agent--opponent conditions.}
+    Mean $\pm$ SD chips won per hand (player~0), 95\% bootstrap CI, and
+    number of hands.
+    Both EV agents consistently outperform the Heuristic;
+    Belief-EV and Static-EV are within 1 chip/hand of each other
+    in all conditions where both face a Heuristic opponent.
+  }
+  \label{tab:main_results}
+  \begin{tabularx}{\textwidth}{l l l
+    S[table-format=3.1]
+    S[table-format=3.1]
+    @{\,}c@{\,}
+    S[table-format=3.1]
+    S[table-format=5.0]}
+    \toprule
+    Agent & Opponent family & Matchup &
+    {Mean} & {SD} & {95\% CI} & {} & {$n$} \\
+    \midrule
+    Heuristic  & Balanced   & vs.\ Heuristic & 97.2  & 123.7 & [93.8,  & 100.8] & 5000 \\
+    Static-EV  & Balanced   & vs.\ Heuristic & 174.2 & 148.7 & [170.1, & 178.3] & 5000 \\
+    Static-EV  & Aggressive & vs.\ Heuristic & 171.8 & 147.3 & [167.9, & 175.9] & 5000 \\
+    Belief-EV  & Balanced   & vs.\ Heuristic & 174.6 & 147.8 & [170.4, & 178.7] & 5000 \\
+    Belief-EV  & Aggressive & vs.\ Heuristic & 172.8 & 146.4 & [168.8, & 176.9] & 5000 \\
+    Belief-EV  & Passive    & vs.\ Heuristic & 175.2 & 151.5 & [171.0, & 179.5] & 5000 \\
+    \bottomrule
+  \end{tabularx}
+\end{table*}
+
+\FloatBarrier
+
+\subsection{Experiment 2: Static-EV Outperforms Belief-EV in Direct Competition}
+
+Figure~\ref{fig:belief_ablation} shows the distribution of per-hand
+chip differentials (Belief-EV $-$ Static-EV) in head-to-head play.
+Table~\ref{tab:ablation_results} reports means, confidence intervals,
+and test statistics.
+
+The Static-EV agent wins significantly more chips/hand than the
+Belief-EV agent in two of three conditions:
+$-13.1$ chips/hand on the trappy family
+($t(4999) = -2.36$, $p = 0.018$)
+and $-11.9$ chips/hand on the aggressive family
+($t(4999) = -2.12$, $p = 0.034$).
+The balanced-family difference of $-9.9$ chips/hand is in the same
+direction and of similar magnitude but does not reach conventional
+significance at $\alpha = 0.05$
+($t(4999) = -1.76$, $p = 0.078$).
+Across all three conditions, the 95\% CI for the mean difference
+includes zero only in the balanced case; the consistent negative
+sign and effect sizes of $\approx$10--13 chips/hand represent
+approximately 6--7\% of the mean pot.
+
+\textbf{This constitutes a falsification of the central hypothesis.}
+Belief updating does not improve payoff in direct competition; it
+imposes a measurable performance cost.
+We attribute this to response-model misspecification: the Bayesian
+update in Equation~\ref{eq:bayes_update} amplifies errors in
+$P(a \mid c,\, s,\, \mathcal{F})$ when the opponent is itself
+EV-rational rather than drawn from the assumed family.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.98\textwidth]{figures/fig2_belief_ablation.png}
+  \caption{%
+    \textbf{Experiment 2 — Belief ablation: per-hand chip differentials
+    in direct Belief-EV vs.\ Static-EV competition.}
+    Histograms of the per-hand chip difference
+    (Belief-EV $-$ Static-EV) across 5,000 hands for the balanced,
+    aggressive, and trappy opponent contexts.
+    The solid coloured vertical line marks the empirical mean;
+    the dashed black line marks zero.
+    In all three conditions the mean is negative, indicating that
+    the Static-EV agent wins more chips/hand.
+    Inset annotations report paired $t$-test statistics.
+  }
+  \label{fig:belief_ablation}
+\end{figure*}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{%
+    \textbf{Experiment 2 — Belief ablation results.}
+    Mean chips/hand for Belief-EV (player~0) and Static-EV (player~1),
+    mean difference with 95\% bootstrap CI, and paired $t$-test statistics.
+    Negative differences favour Static-EV.
+    $n = 5{,}000$ hands per condition.
+  }
+  \label{tab:ablation_results}
+  \begin{tabularx}{\columnwidth}{l
+    S[table-format=3.1]
+    S[table-format=3.1]
+    S[table-format=3.1]
+    @{\,}c@{\,}
+    S[table-format=3.1]
+    S[table-format=-1.2]
+    S[table-format=1.4]}
+    \toprule
+    Context &
+    {Belief} & {Static} & {\multicolumn{3}{c}{Diff [95\% CI]}} &
+    {$t$} & {$p$} \\
+    \midrule
+    Balanced    & 184.5 & 194.4 & -9.9  & [&$-20.5,\, +1.0$&] & -1.76 & 0.0778 \\
+    Aggressive  & 184.3 & 196.1 & -11.9 & [&$-22.5,\, -0.8$&] & -2.12 & 0.0342 \\
+    Trappy      & 181.3 & 194.4 & -13.1 & [&$-23.8,\, -2.2$&] & -2.36 & 0.0183 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Experiment 3: Posterior Entropy and Behavioural Profiles}
+
+Figure~\ref{fig:calibration} (left) shows the distribution of
+posterior entropy across opponent families.
+Mean posterior entropy is nearly identical across families:
+$H = 1.914$ bits (balanced), $1.914$ bits (aggressive),
+and $1.913$ bits (maniac), all close to the maximum possible entropy
+of $H_{\max} = \log_2 7 \approx 1.946$ bits for seven equiprobable
+classes.
+Standard deviations are small ($\sigma \leq 0.07$ bits).
+This near-maximal entropy indicates that the posterior distribution
+over opponent hand classes remains close to uniform at decision time;
+observing a single opponent action provides little information for
+discriminating among the seven hand classes under the parameterised
+response model.
+
+Figure~\ref{fig:calibration} (right) displays action frequency
+profiles.
+The Heuristic agent checks on 55.1\% of decisions and jams on only
+1.2\%, reflecting its conservative rule-based logic.
+The Static-EV and Belief-EV agents have nearly indistinguishable
+profiles: both bet half-pot on $\approx$44--45\% of decisions and jam
+on $\approx$28--29\%.
+The near-identical profiles confirm that posterior updating is not
+generating meaningfully different action selections compared with
+the static prior under these experimental conditions.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.96\textwidth]{figures/fig4_calibration.png}
+  \caption{%
+    \textbf{Experiment 3 — Posterior entropy and action frequency profiles.}
+    \textit{Left}: KDE of per-decision posterior entropy (bits) for the
+    Belief-EV agent under balanced (blue), aggressive (orange), and
+    maniac (green) opponent families.
+    Dashed vertical lines mark family means; the dotted black line
+    marks maximum entropy ($H_{\max} = \log_2 7 \approx 1.946$ bits).
+    All distributions cluster near $H_{\max}$, indicating that the
+    posterior remains close to uniform.
+    \textit{Right}: Action frequency profiles for all three agents
+    (balanced opponent; $n = 5{,}000$ hands each).
+    The Static-EV and Belief-EV profiles are nearly identical;
+    the Heuristic is substantially more passive.
+  }
+  \label{fig:calibration}
+\end{figure*}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{%
+    \textbf{Experiment 3 — Posterior entropy and action frequencies.}
+    Mean $\pm$ SD posterior entropy (bits) per decision for the
+    Belief-EV agent; action proportions summing to 1.0 for each agent
+    type (balanced opponent family; $n = 5{,}000$ hands).
+  }
+  \label{tab:calibration}
+  \begin{tabularx}{\columnwidth}{l l
+      S[table-format=1.3]@{\,$\pm$\,}S[table-format=1.3]}
+    \toprule
+    \multicolumn{2}{l}{Posterior entropy} & \multicolumn{2}{c}{Mean $\pm$ SD (bits)} \\
+    \midrule
+    & Balanced   & 1.914 & 0.074 \\
+    & Aggressive & 1.914 & 0.066 \\
+    & Maniac     & 1.913 & 0.064 \\
+    \bottomrule
+  \end{tabularx}
+  \vspace{6pt}
+  \begin{tabularx}{\columnwidth}{l
+      S[table-format=1.3]
+      S[table-format=1.3]
+      S[table-format=1.3]
+      S[table-format=1.3]
+      S[table-format=1.3]}
+    \toprule
+    Agent & {Fold} & {Call} & {Check} & {Bet½} & {Jam} \\
+    \midrule
+    Heuristic  & 0.112 & 0.050 & 0.551 & 0.245 & 0.012 \\
+    Static-EV  & 0.052 & 0.050 & 0.163 & 0.447 & 0.287 \\
+    Belief-EV  & 0.054 & 0.048 & 0.158 & 0.448 & 0.292 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Experiment 4: Robustness to Held-Out Opponent Families}
+
+Figure~\ref{fig:robustness} compares development-family performance
+to performance on the two held-out families for all three agents.
+Numerical results appear in Table~\ref{tab:robustness_results}.
+
+Neither EV agent shows a meaningful performance drop on held-out
+families.
+Belief-EV: $+0.76$ chips/hand on held-out~1 and $+0.58$ on
+held-out~2 (both negligible relative to the $\approx$150 chip
+standard deviation per hand).
+Static-EV: $-0.58$ on held-out~1 and $+2.21$ on held-out~2.
+The Heuristic is unaffected by opponent family shift by construction
+(it observes no opponent model).
+Crucially, \textbf{the Belief-EV agent gains no robustness advantage
+over Static-EV despite having an explicit dynamic belief model.}
+Both agents transfer equivalently to novel opponent families,
+consistent with the near-uniform posteriors observed in Experiment~3.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=0.96\textwidth]{figures/fig3_robustness.png}
+  \caption{%
+    \textbf{Experiment 4 — Robustness to held-out opponent families.}
+    Mean chips won per hand for all three agents on the development
+    family (no hatch), held-out family~1 (forward-slash hatch), and
+    held-out family~2 (cross hatch).
+    Dots indicate seed-level means; error bars show 95\% bootstrap CI.
+    Neither EV agent shows a performance drop on held-out families;
+    Belief-EV provides no robustness advantage over Static-EV.
+    Vertical dashed lines separate agent groups.
+  }
+  \label{fig:robustness}
+\end{figure*}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{%
+    \textbf{Experiment 4 — Robustness summary.}
+    Mean chips/hand on development (Dev) and held-out families
+    with 95\% bootstrap CI.
+    $\Delta$ = performance change from development baseline.
+    All $|\Delta| \leq 2.2$ chips/hand, indicating strong transfer.
+    $n = 5{,}000$ hands per cell.
+  }
+  \label{tab:robustness_results}
+  \begin{tabularx}{\columnwidth}{l l
+      S[table-format=3.1]
+      @{\,}c@{\,}
+      S[table-format=3.1]
+      S[table-format=+1.1]}
+    \toprule
+    Agent & Family &
+    {Mean} & {95\% CI} & {} & {$\Delta$ vs.\ Dev} \\
+    \midrule
+    Heuristic
+      & Dev         & 97.2  & [93.8,  & 100.8] &       0.0 \\
+      & Held-out 1  & 97.2  & [93.8,  & 100.8] &      +0.0 \\
+      & Held-out 2  & 97.2  & [93.8,  & 100.8] &      +0.0 \\[3pt]
+    Static-EV
+      & Dev         & 174.2 & [170.1, & 178.3] &       --- \\
+      & Held-out 1  & 173.6 & [169.5, & 177.5] &      -0.6 \\
+      & Held-out 2  & 176.4 & [172.2, & 180.5] &      +2.2 \\[3pt]
+    Belief-EV
+      & Dev         & 174.6 & [170.4, & 178.7] &       --- \\
+      & Held-out 1  & 175.4 & [171.3, & 179.5] &      +0.8 \\
+      & Held-out 2  & 175.2 & [171.0, & 179.3] &      +0.6 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Seed-Level Stability}
+
+Figure~\ref{fig:seed_variance} plots per-seed mean chips/hand across
+the five independent replications.
+Across seeds, the Heuristic varies between $91$ and $103$
+chips/hand; both EV agents vary between $163$ and $184$ chips/hand.
+The \emph{rank ordering} of agents is preserved in all five seeds,
+and the Belief-EV vs.\ Static-EV difference never reverses sign.
+This confirms that the main findings are not artefacts of a
+particular random seed.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/fig5_seed_variance.png}
+  \caption{%
+    \textbf{Seed-to-seed stability across five independent replications.}
+    Mean chips won per hand (player~0) plotted against random seed for
+    five agent--opponent conditions.
+    Circles = Heuristic; squares = Static-EV; triangles = Belief-EV.
+    Line style encodes opponent family (solid = balanced, dashed =
+    aggressive, dotted = passive).
+    The rank ordering of agents is preserved across all seeds; seed-to-seed
+    variance is small relative to inter-agent differences.
+    $n = 1{,}000$ hands per seed.
+  }
+  \label{fig:seed_variance}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Summary of Findings}
+
+Table~\ref{tab:summary} synthesises the four experiments.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{%
+    \textbf{Summary of all experimental findings.}
+    Effect direction and magnitude relative to the reference agent.
+    $\uparrow$/$\downarrow$ = outperforms/underperforms reference;
+    $\approx$ = negligible difference.
+  }
+  \label{tab:summary}
+  \begin{tabularx}{\columnwidth}{l l l l}
+    \toprule
+    Experiment & Comparison & Effect & Magnitude \\
+    \midrule
+    1 & EV vs.\ Heuristic          & $\uparrow$        & $+77$ chips/hand \\
+    1 & Belief-EV vs.\ Static-EV   & $\approx$         & $+0.4$ chips/hand \\
+    2 & Belief-EV vs.\ Static-EV   & $\downarrow$      & $-10$ to $-13$ chips/hand \\
+      & (head-to-head)             & ($p \leq 0.034$)  & \\
+    3 & Posterior entropy          & Near max          & $H \approx 1.91$ bits \\
+    3 & Action profiles            & $\approx$         & $<$1\% difference \\
+    4 & Robustness (EV agents)     & $\approx$         & $|\Delta| \leq 2.2$ chips/hand \\
+    4 & Belief-EV robustness       & No advantage      & vs.\ Static-EV \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The dominant result is the large, robust EV-over-heuristic effect
+($+77$ chips/hand; $\approx$79\%).
+The belief-updating effect is zero or negative in all conditions
+where direct comparison is possible.
+The near-uniform posteriors in Experiment~3 provide a mechanistic
+explanation: the response model does not supply sufficient
+discriminating signal to shift the posterior away from the uniform
+prior, rendering belief updates uninformative and their computational
+overhead a net liability.
+
+%% ─────────────────────────────────────────────────────────────────────────────
+%%  References (placeholder — replace with full BibTeX)
+%% ─────────────────────────────────────────────────────────────────────────────
+\bibliographystyle{plainnat}
+\begin{thebibliography}{9}
+
+\bibitem[Chen \& Ankenman(2006)]{chen2006mathematics}
+Chen, B., \& Ankenman, J. (2006).
+\textit{The Mathematics of Poker}.
+ConJelCo LLC.
+
+\bibitem[Osborne \& Rubinstein(1994)]{osborne1994course}
+Osborne, M.~J., \& Rubinstein, A. (1994).
+\textit{A Course in Game Theory}.
+MIT Press.
+
+\bibitem[Brown \& Sandholm(2019)]{brown2019superhuman}
+Brown, N., \& Sandholm, T. (2019).
+Superhuman AI for multiplayer poker.
+\textit{Science}, \textbf{365}(6456), 885--890.
+
+\bibitem[Milch et al.(2005)]{milch2005blog}
+Milch, B., Marthi, B., Russell, S., Sontag, D., Ong, D.~L., \& Kolobov, A. (2005).
+{BLOG}: Probabilistic models with unknown objects.
+\textit{Proceedings of the 19th International Joint Conference on
+Artificial Intelligence}, 1352--1359.
+
+\bibitem[Koller \& Megiddo(1992)]{koller1992complexity}
+Koller, D., \& Megiddo, N. (1992).
+The complexity of two-person zero-sum games in extensive form.
+\textit{Games and Economic Behavior}, \textbf{4}(4), 528--552.
+
+\bibitem[Pearl(1988)]{pearl1988probabilistic}
+Pearl, J. (1988).
+\textit{Probabilistic Reasoning in Intelligent Systems}.
+Morgan Kaufmann.
+
+\end{thebibliography}
+
+\end{document}

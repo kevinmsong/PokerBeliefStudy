@@ -1,0 +1,4 @@
+agent,dev_mean_reward,held_out_mean_reward,performance_drop,n_dev,n_held_out
+BeliefEVAgent,175.28,0.0,175.28,10000,0
+StaticEVAgent,174.985,0.0,174.985,10000,0
+HeuristicAgent,97.21,0.0,97.21,10000,0

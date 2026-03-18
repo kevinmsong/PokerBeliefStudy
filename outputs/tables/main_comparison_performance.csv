@@ -1,0 +1,13 @@
+agent,player,matchup_label,mean_reward,ci_lower,ci_upper,n_hands
+BeliefEVAgent,0,ev_belief_vs_aggressive,172.78,168.57775,176.82049999999998,5000
+HeuristicAgent,1,ev_belief_vs_aggressive,102.67,97.897,107.76075,5000
+BeliefEVAgent,0,ev_belief_vs_balanced,174.61,170.63,178.82025,5000
+HeuristicAgent,1,ev_belief_vs_balanced,102.88,98.39,107.7915,5000
+BeliefEVAgent,0,ev_belief_vs_passive,175.22,171.2495,179.58100000000002,5000
+HeuristicAgent,1,ev_belief_vs_passive,102.75,98.039,107.59025,5000
+HeuristicAgent,0,heuristic_vs_balanced,97.21,93.86,100.82024999999999,5000
+HeuristicAgent,1,heuristic_vs_balanced,88.53,85.41925,91.70075,5000
+StaticEVAgent,0,ev_static_vs_aggressive,171.82,167.57975000000002,175.95024999999998,5000
+HeuristicAgent,1,ev_static_vs_aggressive,104.84,99.99975,109.88374999999999,5000
+StaticEVAgent,0,ev_static_vs_balanced,174.17,170.17,178.372,5000
+HeuristicAgent,1,ev_static_vs_balanced,103.01,98.31,107.975,5000

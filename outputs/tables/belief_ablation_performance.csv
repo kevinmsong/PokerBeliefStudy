@@ -1,0 +1,7 @@
+agent,player,matchup_label,mean_reward,ci_lower,ci_upper,n_hands
+BeliefEVAgent,0,belief_vs_static_aggressive,184.25,178.939,189.94174999999998,5000
+StaticEVAgent,1,belief_vs_static_aggressive,196.12,190.18975,202.31025,5000
+BeliefEVAgent,0,belief_vs_static_balanced,184.53,178.95775,190.0815,5000
+StaticEVAgent,1,belief_vs_static_balanced,194.39,188.41975,200.5005,5000
+BeliefEVAgent,0,belief_vs_static_trappy,181.34,176.13,186.9115,5000
+StaticEVAgent,1,belief_vs_static_trappy,194.41,188.88924999999998,200.3315,5000
