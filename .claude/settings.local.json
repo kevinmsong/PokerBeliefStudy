@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -m py_compile src/cards.py src/hand_eval.py src/hand_classes.py src/state.py src/infoset.py src/beliefs.py src/response_model.py src/equity.py src/simulate.py src/tournament.py src/analysis.py src/utils.py src/agents/base.py src/agents/heuristic.py src/agents/ev_static.py src/agents/ev_belief.py run_experiment.py)",
-      "Bash(python -m pytest tests/ -v)",
-      "Bash(python run_experiment.py --experiment calibration --seeds 42 --hands 10 --output outputs/ --quiet)"
-    ]
-  }
-}
