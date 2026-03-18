@@ -1,0 +1,1120 @@
+[
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000000",
+    "board": [
+      "8h",
+      "5s",
+      "9c",
+      "Th"
+    ],
+    "hole_cards_0": [
+      "3d",
+      "9s"
+    ],
+    "hole_cards_1": [
+      "5h",
+      "3c"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 51.0,
+          "bet_half_pot": 109.36169827062696,
+          "bet_pot": 86.9841030989917,
+          "jam": 116.11277106486034
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 300,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "weak_showdown",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 300,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 0
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000001",
+    "board": [
+      "Td",
+      "7h",
+      "9d",
+      "3s",
+      "Kd"
+    ],
+    "hole_cards_0": [
+      "4c",
+      "4s"
+    ],
+    "hole_cards_1": [
+      "Ac",
+      "Ah"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "bet_half_pot",
+        "size": 50,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 56.00000000000001,
+          "bet_half_pot": 92.5607329471328,
+          "bet_pot": 76.01285763620686,
+          "jam": 91.9436144675698
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            50
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      },
+      {
+        "street": "turn",
+        "decision_index": 2,
+        "player": 0,
+        "action": "call",
+        "size": 150,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            150
+          ]
+        ],
+        "ev_table": {
+          "fold": 0.0,
+          "call": 110.0
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.30046685700764497,
+          "strong_made": 0.26493822292974273,
+          "medium_made": 0.079084183695523,
+          "weak_showdown": 0.03371941019105816,
+          "strong_draw": 0.18924461931016778,
+          "weak_draw": 0.03782735864073021,
+          "air": 0.09471934822513323
+        },
+        "posterior_entropy": 1.6902974798356865
+      }
+    ],
+    "terminal_reward_0": 0,
+    "terminal_reward_1": 500,
+    "showdown_winner": 1,
+    "realized_hand_class_0": "weak_showdown",
+    "realized_hand_class_1": "strong_made",
+    "final_pot": 500,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 1
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000002",
+    "board": [
+      "3c",
+      "Kd",
+      "Tc",
+      "7h"
+    ],
+    "hole_cards_0": [
+      "Jc",
+      "9h"
+    ],
+    "hole_cards_1": [
+      "As",
+      "3d"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "bet_half_pot",
+        "size": 50,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 46.0,
+          "bet_half_pot": 77.85988828907543,
+          "bet_pot": 43.09912124785235,
+          "jam": 23.46433744191329
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            50
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 150,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "weak_draw",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 150,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 2
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000003",
+    "board": [
+      "Ad",
+      "Jd",
+      "5d",
+      "7h"
+    ],
+    "hole_cards_0": [
+      "4d",
+      "3h"
+    ],
+    "hole_cards_1": [
+      "8h",
+      "4c"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "bet_half_pot",
+        "size": 50,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 38.0,
+          "bet_half_pot": 46.358078307523904,
+          "bet_pot": 15.671007590890277,
+          "jam": -4.7330119215923325
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            50
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 150,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "strong_draw",
+    "realized_hand_class_1": "weak_draw",
+    "final_pot": 150,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 3
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000004",
+    "board": [
+      "Jd",
+      "Ac",
+      "As",
+      "Qc"
+    ],
+    "hole_cards_0": [
+      "Kc",
+      "Js"
+    ],
+    "hole_cards_1": [
+      "9s",
+      "2h"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 71.0,
+          "bet_half_pot": 147.1638702484888,
+          "bet_pot": 139.09751904721966,
+          "jam": 164.45108425944142
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 300,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "strong_made",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 300,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 4
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000005",
+    "board": [
+      "4s",
+      "Td",
+      "3h",
+      "5c"
+    ],
+    "hole_cards_0": [
+      "2c",
+      "4c"
+    ],
+    "hole_cards_1": [
+      "7h",
+      "5h"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 56.00000000000001,
+          "bet_half_pot": 100.96121560887988,
+          "bet_pot": 97.95534856177652,
+          "jam": 164.45108425944142
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 300,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "weak_showdown",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 300,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 5
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000006",
+    "board": [
+      "Ts",
+      "8s",
+      "Js",
+      "Qs",
+      "Kd"
+    ],
+    "hole_cards_0": [
+      "Ks",
+      "Ad"
+    ],
+    "hole_cards_1": [
+      "Th",
+      "Qd"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 90.0,
+          "bet_half_pot": 180.7658008954771,
+          "bet_pot": 191.21093499544762,
+          "jam": 212.78939745402246
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "call",
+        "size": 200,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 500,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "nuts_or_near_nuts",
+    "realized_hand_class_1": "strong_made",
+    "final_pot": 500,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 6
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000007",
+    "board": [
+      "Tc",
+      "3d",
+      "Td",
+      "5h"
+    ],
+    "hole_cards_0": [
+      "Ac",
+      "2s"
+    ],
+    "hole_cards_1": [
+      "9c",
+      "Kc"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 56.99999999999999,
+          "bet_half_pot": 77.85988828907543,
+          "bet_pot": 95.21253719608029,
+          "jam": 112.08457829864524
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 300,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "weak_showdown",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 300,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 7
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000008",
+    "board": [
+      "9d",
+      "4h",
+      "Qc",
+      "Qh"
+    ],
+    "hole_cards_0": [
+      "3s",
+      "9h"
+    ],
+    "hole_cards_1": [
+      "7c",
+      "6c"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "jam",
+        "size": 200,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 72.0,
+          "bet_half_pot": 124.06254292868434,
+          "bet_pot": 133.61189631582724,
+          "jam": 180.56385532430176
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 300,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "strong_made",
+    "realized_hand_class_1": "weak_showdown",
+    "final_pot": 300,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 8
+  },
+  {
+    "run_id": "calibration_belief_calibration_aggressive_s42",
+    "seed": 42,
+    "experiment_id": "calibration",
+    "matchup_id": "ev_belief_vs_heuristic",
+    "opponent_family_0": "aggressive",
+    "opponent_family_1": "balanced",
+    "hand_id": "calibration_belief_calibration_aggressive_s42_h000009",
+    "board": [
+      "7h",
+      "Jc",
+      "2c",
+      "8c"
+    ],
+    "hole_cards_0": [
+      "2s",
+      "6s"
+    ],
+    "hole_cards_1": [
+      "Qs",
+      "Ks"
+    ],
+    "action_history": [
+      {
+        "street": "turn",
+        "decision_index": 0,
+        "player": 0,
+        "action": "bet_pot",
+        "size": 100,
+        "legal_actions": [
+          [
+            "check",
+            0
+          ],
+          [
+            "bet_half_pot",
+            50
+          ],
+          [
+            "bet_pot",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": {
+          "check": 35.0,
+          "bet_half_pot": 54.758560969270974,
+          "bet_pot": 67.78442353911822,
+          "jam": 3.323373610837846
+        },
+        "prior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior": {
+          "nuts_or_near_nuts": 0.14285714285714285,
+          "strong_made": 0.14285714285714285,
+          "medium_made": 0.14285714285714285,
+          "weak_showdown": 0.14285714285714285,
+          "strong_draw": 0.14285714285714285,
+          "weak_draw": 0.14285714285714285,
+          "air": 0.14285714285714285
+        },
+        "posterior_entropy": 1.945910149055313
+      },
+      {
+        "street": "turn",
+        "decision_index": 1,
+        "player": 1,
+        "action": "fold",
+        "size": 0,
+        "legal_actions": [
+          [
+            "fold",
+            0
+          ],
+          [
+            "call",
+            100
+          ],
+          [
+            "jam",
+            200
+          ]
+        ],
+        "ev_table": null,
+        "prior": null,
+        "posterior": null,
+        "posterior_entropy": null
+      }
+    ],
+    "terminal_reward_0": 200,
+    "terminal_reward_1": 0,
+    "showdown_winner": 0,
+    "realized_hand_class_0": "weak_showdown",
+    "realized_hand_class_1": "air",
+    "final_pot": 200,
+    "matchup_label": "belief_calibration_aggressive",
+    "agent0_type": "BeliefEVAgent",
+    "agent1_type": "HeuristicAgent",
+    "hand_num": 9
+  }
+]

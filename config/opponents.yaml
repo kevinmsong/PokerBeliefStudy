@@ -1,0 +1,116 @@
+# Opponent family definitions
+# Parameters:
+#   aggression: tendency to bet/raise when no bet faced [0,1]
+#   bluff_rate: tendency to bluff with weak hands [0,1]
+#   call_looseness: tendency to call when facing bets [0,1]
+#   jam_aggression: tendency to jam vs normal-sized bets [0,1]
+#   draw_semibluff_freq: tendency for draws to semi-bluff [0,1]
+#   trap_freq: tendency to slow-play strong hands [0,1]
+
+development:
+  balanced:
+    aggression: 0.5
+    bluff_rate: 0.25
+    call_looseness: 0.5
+    jam_aggression: 0.2
+    draw_semibluff_freq: 0.4
+    trap_freq: 0.15
+
+  aggressive:
+    aggression: 0.8
+    bluff_rate: 0.55
+    call_looseness: 0.45
+    jam_aggression: 0.5
+    draw_semibluff_freq: 0.7
+    trap_freq: 0.05
+
+  passive:
+    aggression: 0.2
+    bluff_rate: 0.10
+    call_looseness: 0.75
+    jam_aggression: 0.05
+    draw_semibluff_freq: 0.15
+    trap_freq: 0.10
+
+  tight:
+    aggression: 0.45
+    bluff_rate: 0.05
+    call_looseness: 0.25
+    jam_aggression: 0.15
+    draw_semibluff_freq: 0.20
+    trap_freq: 0.20
+
+  loose:
+    aggression: 0.55
+    bluff_rate: 0.35
+    call_looseness: 0.80
+    jam_aggression: 0.25
+    draw_semibluff_freq: 0.50
+    trap_freq: 0.10
+
+  maniac:
+    aggression: 0.95
+    bluff_rate: 0.80
+    call_looseness: 0.60
+    jam_aggression: 0.75
+    draw_semibluff_freq: 0.90
+    trap_freq: 0.02
+
+  trappy:
+    aggression: 0.30
+    bluff_rate: 0.15
+    call_looseness: 0.55
+    jam_aggression: 0.10
+    draw_semibluff_freq: 0.25
+    trap_freq: 0.70
+
+  overbluffer:
+    aggression: 0.75
+    bluff_rate: 0.85
+    call_looseness: 0.40
+    jam_aggression: 0.45
+    draw_semibluff_freq: 0.80
+    trap_freq: 0.05
+
+  underbluffer:
+    aggression: 0.40
+    bluff_rate: 0.02
+    call_looseness: 0.45
+    jam_aggression: 0.10
+    draw_semibluff_freq: 0.10
+    trap_freq: 0.25
+
+held_out:
+  held_out_1:
+    aggression: 0.65
+    bluff_rate: 0.40
+    call_looseness: 0.35
+    jam_aggression: 0.35
+    draw_semibluff_freq: 0.60
+    trap_freq: 0.30
+
+  held_out_2:
+    aggression: 0.35
+    bluff_rate: 0.20
+    call_looseness: 0.65
+    jam_aggression: 0.08
+    draw_semibluff_freq: 0.30
+    trap_freq: 0.45
+
+shifted:
+  # Opponents with shifted parameters for robustness testing
+  aggressive_trappy:
+    aggression: 0.60
+    bluff_rate: 0.30
+    call_looseness: 0.45
+    jam_aggression: 0.30
+    draw_semibluff_freq: 0.50
+    trap_freq: 0.50
+
+  loose_passive:
+    aggression: 0.25
+    bluff_rate: 0.15
+    call_looseness: 0.85
+    jam_aggression: 0.05
+    draw_semibluff_freq: 0.20
+    trap_freq: 0.05

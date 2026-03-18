@@ -1,0 +1,19 @@
+heuristic:
+  name: HeuristicAgent
+  label: heuristic
+  description: "Fixed-rule heuristic agent using hand class buckets"
+
+ev_static:
+  name: StaticEVAgent
+  label: ev_static
+  n_rollouts: 200
+  prior: uniform
+  description: "EV-maximizing agent with static (non-updating) prior"
+
+ev_belief:
+  name: BeliefEVAgent
+  label: ev_belief
+  n_rollouts: 200
+  prior: uniform
+  smoothing: 0.05
+  description: "EV-maximizing agent with Bayesian belief updating"
