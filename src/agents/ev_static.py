@@ -63,58 +63,37 @@ class StaticEVAgent(BaseAgent):
         return (best_action, best_amount)
 
     def _compute_ev_table(self, infostate: InfoState) -> Dict[str, float]:
-        """Compute EV for each legal action."""
+        """Compute EV for each legal action, sharing a single equity estimate."""
+        # Compute equity once for this decision point
+        equity = estimate_equity(
+            hero_cards=infostate.hole_cards,
+            board=infostate.board,
+            opp_belief=self.prior,
+            rng=self.rng,
+            n_samples=self.n_rollouts,
+        )
         ev_table = {}
         for action, amount in infostate.legal_actions:
-            ev = self._compute_action_ev(action, amount, infostate)
+            ev = self._compute_action_ev(action, amount, infostate, equity)
             ev_table[action] = ev
         return ev_table
 
-    def _compute_action_ev(self, action: str, amount: int, infostate: InfoState) -> float:
-        """Compute EV of a single action via Monte Carlo rollout."""
+    def _compute_action_ev(self, action: str, amount: int, infostate: InfoState, equity: float) -> float:
+        """Compute EV of a single action using pre-computed equity."""
         pot = infostate.pot
-        stack_self = infostate.stack_self
 
         if action == "fold":
-            return 0.0  # Forfeit pot, relative EV = 0 (we gain nothing)
+            return 0.0
 
         if action == "check":
-            # Equity in pot without investing more chips
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=self.prior,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
             return equity * pot
 
-        if action in ("call",):
-            # Pay amount, then equity in new pot
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=self.prior,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
+        if action == "call":
             new_pot = pot + amount
-            ev = equity * new_pot - amount
-            return ev
+            return equity * new_pot - amount
 
         if action in ("bet_half_pot", "bet_pot", "jam"):
-            # We bet `amount`; opponent responds based on prior + response model
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=self.prior,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
-
-            # Simulate opponent response
-            ev = self._compute_bet_ev(action, amount, equity, infostate)
-            return ev
+            return self._compute_bet_ev(action, amount, equity, infostate)
 
         return 0.0
 

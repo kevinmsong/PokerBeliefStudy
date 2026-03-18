@@ -291,9 +291,10 @@ def classify_hand(hole_cards: Tuple[str, str], board: List[str]) -> str:
 
     # Straight
     if hand_cat == 5:
-        # Check if it's near-nut straight (using board-relative context)
-        percentile = _estimate_percentile(hole_cards, board, n_samples=50)
-        if percentile >= 0.92:
+        # Near-nut straight: score[1] is the high card rank of the straight.
+        # Rank 12=A (broadway), 11=K-high, 10=Q-high -> nuts_or_near_nuts.
+        straight_high = score[1]
+        if straight_high >= RANK_VALUES['Q']:
             return 'nuts_or_near_nuts'
         return 'strong_made'
 

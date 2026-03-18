@@ -157,9 +157,9 @@ def fig_belief_ablation():
         ("belief_vs_static_trappy",      "Trappy"),
     ]
 
-    # Extra top margin so suptitle and panel titles don't crowd
-    fig, axes = plt.subplots(1, 3, figsize=(9.5, 3.8))
-    fig.subplots_adjust(wspace=0.42, top=0.78, bottom=0.18)
+    # Extra top margin for suptitle; extra bottom margin for sub-axis annotations
+    fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.0))
+    fig.subplots_adjust(wspace=0.42, top=0.78, bottom=0.28)
 
     for ax, (ml, lbl) in zip(axes, conditions):
         grp      = ba[ba.matchup_label == ml]
@@ -171,27 +171,30 @@ def fig_belief_ablation():
         ax.hist(diff, bins=bins, color=C_BELIEF, alpha=0.72,
                 edgecolor="none", zorder=3)
         ax.axvline(0, color="black", linewidth=1.0, linestyle="--", alpha=0.6, zorder=4)
-        ax.axvline(diff.mean(), color=C_BELIEF, linewidth=1.8,
-                   linestyle="-", zorder=5,
-                   label=f"Mean = {diff.mean():.1f}")
+        # Mean line — no legend label (annotation goes below x-axis instead)
+        ax.axvline(diff.mean(), color=C_BELIEF, linewidth=1.8, linestyle="-", zorder=5)
 
         t, p = stats.ttest_rel(belief_r, static_r)
         p_str = f"p = {p:.3f}" if p >= 0.001 else "p < 0.001"
-        # Place stats box in upper right, well below panel title
-        ax.text(0.96, 0.82, f"$t$ = {t:.2f}\n{p_str}",
-                transform=ax.transAxes, ha="right", va="top",
-                fontsize=9.5,
-                bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
-                          edgecolor="0.65", linewidth=0.8))
 
-        # Panel title with extra padding so it clears the suptitle
+        # ── Sub-axis annotation row, below x-axis label ──────────────────────
+        # Left: mean value (coloured to match the mean line)
+        ax.text(0.0, -0.30, f"Mean = {diff.mean():.1f}",
+                transform=ax.transAxes, ha="left", va="top",
+                fontsize=9.5, color=C_BELIEF)
+        # Right: t and p stats
+        ax.text(1.0, -0.30, f"$t$ = {t:.2f},  {p_str}",
+                transform=ax.transAxes, ha="right", va="top",
+                fontsize=9.5, color="#333333")
+
+        # Panel title with extra padding
         ax.set_title(lbl, fontsize=12, pad=10, fontweight="bold")
         ax.set_xlabel("Δ chips/hand  (Belief-EV − Static-EV)", fontsize=10, labelpad=5)
+        # Shift x-axis label 2 pts left on rightmost subplot only
+        if ax is axes[2]:
+            ax.xaxis.set_label_coords(0.47, -0.13)
         if ax is axes[0]:
             ax.set_ylabel("Frequency", fontsize=10)
-        # Legend in upper left, below top spine
-        ax.legend(frameon=True, framealpha=0.9, edgecolor="0.75",
-                  fontsize=9.5, loc="upper left", borderpad=0.5)
         ax.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6, zorder=0)
         ax.tick_params(labelsize=9.5)
 
@@ -274,8 +277,8 @@ def fig_robustness():
         fontsize=11,
     )
     fig.tight_layout(pad=1.3)
-    fig.savefig(f"{OUT}/fig3_robustness.pdf")
-    fig.savefig(f"{OUT}/fig3_robustness.png")
+    fig.savefig(f"{OUT}/fig4_robustness.pdf")
+    fig.savefig(f"{OUT}/fig4_robustness.png")
     plt.close(fig)
     print("Fig 3 saved.")
 
@@ -345,10 +348,10 @@ def fig_calibration():
     ax1.set_xlabel("Posterior entropy (bits)", labelpad=5)
     ax1.set_ylabel("Density", labelpad=5)
     ax1.set_title("Posterior entropy by opponent family", fontsize=11, pad=6)
-    # Place legend to the right of ax1, anchored to its right edge
+    # Place legend slightly left of upper-right corner
     ax1.legend(frameon=True, framealpha=0.9, edgecolor="0.8",
-               fontsize=9.5, loc="upper left",
-               bbox_to_anchor=(1.01, 1.0), borderpad=0.7)
+               fontsize=9.0, loc="upper right",
+               bbox_to_anchor=(0.93, 1.0), borderpad=0.6)
     ax1.grid(linestyle=":", linewidth=0.5, alpha=0.55)
     ax1.tick_params(labelsize=10)
 
@@ -382,8 +385,8 @@ def fig_calibration():
         "Experiment 3 — Belief calibration and behavioural profiles",
         fontsize=12, y=1.03,
     )
-    fig.savefig(f"{OUT}/fig4_calibration.pdf")
-    fig.savefig(f"{OUT}/fig4_calibration.png")
+    fig.savefig(f"{OUT}/fig3_calibration.pdf")
+    fig.savefig(f"{OUT}/fig3_calibration.png")
     plt.close(fig)
     print("Fig 4 saved.")
 
@@ -422,8 +425,8 @@ def fig_seed_variance():
     ax.grid(linestyle=":", linewidth=0.5, alpha=0.6)
     ax.tick_params(labelsize=10)
     ax.legend(frameon=True, framealpha=0.92, edgecolor="0.8",
-              fontsize=8.0, loc="upper right", borderpad=0.5,
-              labelspacing=0.25, handlelength=1.6, handletextpad=0.4)
+              fontsize=6.0, loc="upper right", borderpad=0.5,
+              labelspacing=0.22, handlelength=1.4, handletextpad=0.4)
     ax.set_title(
         "Seed-to-seed stability across 5 independent replications\n"
         "(n = 1,000 hands per seed)",

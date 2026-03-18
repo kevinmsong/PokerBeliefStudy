@@ -73,56 +73,41 @@ class BeliefEVAgent(BaseAgent):
         return (best_action, best_amount)
 
     def _compute_ev_table(self, infostate: InfoState) -> Dict[str, float]:
-        """Compute EV for each legal action using current posterior."""
+        """Compute EV for each legal action, sharing a single equity estimate."""
+        posterior = self.belief.get_posterior()
+        smoothed = self._apply_smoothing(posterior)
+
+        # Compute equity once for this decision point
+        equity = estimate_equity(
+            hero_cards=infostate.hole_cards,
+            board=infostate.board,
+            opp_belief=smoothed,
+            rng=self.rng,
+            n_samples=self.n_rollouts,
+        )
         ev_table = {}
         for action, amount in infostate.legal_actions:
-            ev = self._compute_action_ev(action, amount, infostate)
+            ev = self._compute_action_ev(action, amount, infostate, equity, smoothed)
             ev_table[action] = ev
         return ev_table
 
-    def _compute_action_ev(self, action: str, amount: int, infostate: InfoState) -> float:
-        """Compute EV of a single action using posterior belief."""
+    def _compute_action_ev(self, action: str, amount: int, infostate: InfoState,
+                           equity: float, smoothed: Dict[str, float]) -> float:
+        """Compute EV of a single action using pre-computed equity."""
         pot = infostate.pot
-        posterior = self.belief.get_posterior()
-
-        # Apply Laplace smoothing to posterior
-        smoothed = self._apply_smoothing(posterior)
 
         if action == "fold":
             return 0.0
 
         if action == "check":
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=smoothed,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
             return equity * pot
 
         if action == "call":
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=smoothed,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
             new_pot = pot + amount
-            ev = equity * new_pot - amount
-            return ev
+            return equity * new_pot - amount
 
         if action in ("bet_half_pot", "bet_pot", "jam"):
-            equity = estimate_equity(
-                hero_cards=infostate.hole_cards,
-                board=infostate.board,
-                opp_belief=smoothed,
-                rng=self.rng,
-                n_samples=max(50, self.n_rollouts // 4),
-            )
-            ev = self._compute_bet_ev(action, amount, equity, infostate, smoothed)
-            return ev
+            return self._compute_bet_ev(action, amount, equity, infostate, smoothed)
 
         return 0.0
 
