@@ -1,450 +1,585 @@
 """
-generate_figures.py — Produce all 300 dpi publication figures for main.tex.
+generate_figures.py — Produce publication figures for the refreshed study.
 
 Run from repo root:
     python publication/generate_figures.py
 """
 
-import json
+from __future__ import annotations
+
 import glob
-import os
+import json
+import math
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+import matplotlib
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import matplotlib.ticker as ticker
-from collections import Counter, defaultdict
 from scipy import stats
 from scipy.stats import gaussian_kde
 
-matplotlib.rcParams.update({
-    "font.family":        "serif",
-    "font.serif":         ["Times New Roman", "DejaVu Serif"],
-    "font.size":          11,
-    "axes.titlesize":     12,
-    "axes.labelsize":     11,
-    "xtick.labelsize":    10,
-    "ytick.labelsize":    10,
-    "legend.fontsize":    10,
-    "legend.title_fontsize": 10,
-    "figure.dpi":         300,
-    "savefig.dpi":        300,
-    "savefig.bbox":       "tight",
-    "savefig.pad_inches": 0.08,
-    "axes.spines.top":    False,
-    "axes.spines.right":  False,
-    "axes.linewidth":     1.0,
-    "xtick.major.width":  1.0,
-    "ytick.major.width":  1.0,
-    "xtick.major.size":   4,
-    "ytick.major.size":   4,
-    "lines.linewidth":    1.6,
-    "patch.linewidth":    0.8,
-    "text.usetex":        False,
-    "axes.titlepad":      8,
-})
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-OUT = "publication/figures"
-os.makedirs(OUT, exist_ok=True)
+from src.analysis import compute_switch_case_metrics
+from src.utils import bootstrap_ci
 
-# ── Colour palette (Nature-style, colourblind-safe) ──────────────────────────
-C_HEURISTIC = "#878787"   # grey
-C_STATIC    = "#2166AC"   # blue
-C_BELIEF    = "#D6604D"   # orange-red
-C_HELD1     = "#4DAC26"   # green
-C_HELD2     = "#762A83"   # purple
+
+matplotlib.use("Agg")
+
+OUT = ROOT / "publication" / "figures"
+PROCESSED = ROOT / "outputs" / "processed"
+RAW = ROOT / "outputs" / "raw_runs"
+
+OUT.mkdir(parents=True, exist_ok=True)
+
+matplotlib.rcParams.update(
+    {
+        "font.family": "serif",
+        "font.serif": ["Times New Roman", "DejaVu Serif"],
+        "font.size": 11,
+        "axes.titlesize": 12,
+        "axes.labelsize": 11,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 8,
+        "figure.dpi": 300,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+        "savefig.pad_inches": 0.08,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.linewidth": 1.0,
+        "xtick.major.width": 1.0,
+        "ytick.major.width": 1.0,
+        "xtick.major.size": 4,
+        "ytick.major.size": 4,
+        "lines.linewidth": 1.8,
+        "patch.linewidth": 0.8,
+        "text.usetex": False,
+    }
+)
+
+
+C_HEURISTIC = "#7A7A7A"
+C_STATIC = "#2B6CB0"
+C_BELIEF = "#D76B41"
+C_CONTROL = "#5F6CAF"
+C_ADAPTIVE = "#2F855A"
+C_SWITCH = "#AA3A38"
+C_BALANCED = "#4C78A8"
+C_AGGRESSIVE = "#E45756"
+C_PASSIVE = "#72B7B2"
+C_TRAPPY = "#B279A2"
 
 AGENT_COLORS = {
     "HeuristicAgent": C_HEURISTIC,
-    "StaticEVAgent":  C_STATIC,
-    "BeliefEVAgent":  C_BELIEF,
+    "StaticEVAgent": C_STATIC,
+    "BeliefEVAgent": C_BELIEF,
 }
 AGENT_LABELS = {
     "HeuristicAgent": "Heuristic",
-    "StaticEVAgent":  "Static-EV",
-    "BeliefEVAgent":  "Belief-EV",
+    "StaticEVAgent": "Static-EV",
+    "BeliefEVAgent": "Belief-EV",
+}
+FAMILY_LABELS = {
+    "balanced": "Balanced",
+    "aggressive": "Aggressive",
+    "passive": "Passive",
+    "maniac": "Maniac",
+    "trappy": "Trappy",
+    "held_out_1": "Held-out 1",
+    "held_out_2": "Held-out 2",
+}
+FAMILY_COLORS = {
+    "balanced": C_BALANCED,
+    "aggressive": C_AGGRESSIVE,
+    "passive": C_PASSIVE,
+    "maniac": "#54A24B",
+    "trappy": C_TRAPPY,
+    "held_out_1": "#3C8D2F",
+    "held_out_2": "#8E5EA2",
 }
 
 
-def bootstrap_ci(x, n=5000, alpha=0.05, seed=0):
-    rng = np.random.default_rng(seed)
-    means = np.array([rng.choice(x, len(x), replace=True).mean() for _ in range(n)])
-    return np.percentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+def _read_processed(experiment_id: str) -> pd.DataFrame:
+    path = PROCESSED / f"{experiment_id}_summary.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing processed file: {path}")
+    return pd.read_csv(path)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIG 1 — Main comparison: chips/hand with 95 % CI, grouped by agent
-# ─────────────────────────────────────────────────────────────────────────────
-def fig_main_comparison():
-    mc = pd.read_csv("outputs/processed/main_comparison_summary.csv")
-
-    # Three agents × three opponent contexts; heuristic only has balanced
-    groups = [
-        # (matchup_label,            agent_type,      opponent_label)
-        ("heuristic_vs_balanced",    "HeuristicAgent", "Balanced"),
-        ("ev_static_vs_balanced",    "StaticEVAgent",  "Balanced"),
-        ("ev_static_vs_aggressive",  "StaticEVAgent",  "Aggressive"),
-        ("ev_belief_vs_balanced",    "BeliefEVAgent",  "Balanced"),
-        ("ev_belief_vs_aggressive",  "BeliefEVAgent",  "Aggressive"),
-        ("ev_belief_vs_passive",     "BeliefEVAgent",  "Passive"),
-    ]
-
-    rows = []
-    for ml, at, opp in groups:
-        r = mc[(mc.matchup_label == ml) & (mc.agent0_type == at)]["terminal_reward_0"].values
-        if len(r) == 0:
-            continue
-        lo, hi = bootstrap_ci(r)
-        rows.append(dict(label=f"{AGENT_LABELS[at]}\n({opp})", agent=at,
-                         mean=r.mean(), lo=lo, hi=hi))
-    df = pd.DataFrame(rows)
-
-    fig, ax = plt.subplots(figsize=(6.5, 3.8))
-    xs = np.arange(len(df))
-    bar_colors = [AGENT_COLORS[a] for a in df["agent"]]
-
-    bars = ax.bar(xs, df["mean"], color=bar_colors, alpha=0.88, width=0.60,
-                  zorder=3, edgecolor="white", linewidth=0.5)
-    ax.errorbar(xs, df["mean"],
-                yerr=[df["mean"] - df["lo"], df["hi"] - df["mean"]],
-                fmt="none", color="#222222", capsize=4, capthick=1.2,
-                elinewidth=1.2, zorder=4)
-
-    for i, row in df.iterrows():
-        ax.text(i, row["hi"] + 4, f'{row["mean"]:.0f}',
-                ha="center", va="bottom", fontsize=9, color="#222222")
-
-    ax.set_xticks(xs)
-    ax.set_xticklabels(df["label"], fontsize=9.5)
-    ax.set_ylabel("Mean chips won per hand", labelpad=6)
-    ax.set_ylim(0, 250)
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(25))
-    ax.grid(axis="y", which="major", linestyle=":", linewidth=0.6,
-            alpha=0.7, zorder=0)
-    ax.axhline(0, color="black", linewidth=0.6, linestyle="--", alpha=0.35)
-
-    legend_patches = [
-        mpatches.Patch(color=C_HEURISTIC, alpha=0.88, label="Heuristic"),
-        mpatches.Patch(color=C_STATIC,    alpha=0.88, label="Static-EV"),
-        mpatches.Patch(color=C_BELIEF,    alpha=0.88, label="Belief-EV"),
-    ]
-    ax.legend(handles=legend_patches, loc="upper left",
-              frameon=True, framealpha=0.9, edgecolor="0.8",
-              fontsize=10, borderpad=0.6)
-
-    ax.set_title("Experiment 1 — Agent performance across opponent families\n"
-                 "(n = 5,000 hands per condition; error bars = 95% bootstrap CI)",
-                 fontsize=11)
-
-    fig.tight_layout(pad=1.2)
-    fig.savefig(f"{OUT}/fig1_main_comparison.pdf")
-    fig.savefig(f"{OUT}/fig1_main_comparison.png")
+def _save(fig: plt.Figure, stem: str) -> None:
+    fig.savefig(OUT / f"{stem}.png")
+    fig.savefig(OUT / f"{stem}.pdf")
     plt.close(fig)
-    print("Fig 1 saved.")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIG 2 — Belief ablation: head-to-head chip differential distributions
-# ─────────────────────────────────────────────────────────────────────────────
-def fig_belief_ablation():
-    ba = pd.read_csv("outputs/processed/belief_ablation_summary.csv")
+def _ci(values: pd.Series | np.ndarray | list[float]) -> tuple[float, float, float]:
+    arr = pd.Series(values).dropna().to_numpy()
+    stats_ci = bootstrap_ci(arr.tolist(), n_boot=2000, ci=0.95)
+    return stats_ci["mean"], stats_ci["lower"], stats_ci["upper"]
 
+
+def _entropy_bits(raw_entropy_nats: float) -> float:
+    return raw_entropy_nats / math.log(2.0)
+
+
+def _load_json(path: Path) -> list[dict]:
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def fig_main_comparison() -> None:
+    df = _read_processed("main_comparison")
+    family_order = ["balanced", "aggressive", "passive"]
+    agent_order = ["HeuristicAgent", "StaticEVAgent", "BeliefEVAgent"]
+
+    fig, ax = plt.subplots(figsize=(8.8, 4.6))
+    x = np.arange(len(family_order))
+    width = 0.24
+
+    for idx, agent in enumerate(agent_order):
+        means = []
+        lowers = []
+        uppers = []
+        for family in family_order:
+            subset = df[(df["agent0_type"] == agent) & (df["behavior_family_1"] == family)]
+            mean, lo, hi = _ci(subset["terminal_reward_0"])
+            means.append(mean)
+            lowers.append(mean - lo)
+            uppers.append(hi - mean)
+
+        offset = (idx - 1) * width
+        ax.bar(
+            x + offset,
+            means,
+            width=width,
+            color=AGENT_COLORS[agent],
+            label=AGENT_LABELS[agent],
+            alpha=0.9,
+            edgecolor="white",
+            linewidth=0.6,
+            zorder=3,
+        )
+        ax.errorbar(
+            x + offset,
+            means,
+            yerr=[lowers, uppers],
+            fmt="none",
+            color="#222222",
+            capsize=4,
+            elinewidth=1.1,
+            zorder=4,
+        )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([FAMILY_LABELS[f] for f in family_order])
+    ax.set_ylabel("Net chips won per hand")
+    ax.set_title(
+        "Experiment 1 — Main comparison across family-policy opponents\n"
+        "(45,000 hands total; 5,000 hands per cell; error bars = 95% bootstrap CI)"
+    )
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(25))
+    ax.grid(axis="y", linestyle=":", linewidth=0.6, alpha=0.7, zorder=0)
+    ax.axhline(0, color="black", linewidth=0.8, linestyle="--", alpha=0.35)
+    ax.legend(loc="upper left", frameon=True, framealpha=0.92, edgecolor="0.8",
+              bbox_to_anchor=(-0.0016, 1.0), bbox_transform=ax.transAxes)
+
+    _save(fig, "fig1_main_comparison")
+
+
+def fig_belief_ablation() -> None:
+    df = _read_processed("belief_ablation")
     conditions = [
-        ("belief_vs_static_balanced",    "Balanced"),
-        ("belief_vs_static_aggressive",  "Aggressive"),
-        ("belief_vs_static_trappy",      "Trappy"),
+        ("belief_vs_static_balanced", "Balanced"),
+        ("belief_vs_static_aggressive", "Aggressive"),
+        ("belief_vs_static_trappy", "Trappy"),
     ]
 
-    # Extra top margin for suptitle; extra bottom margin for sub-axis annotations
-    fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.0))
-    fig.subplots_adjust(wspace=0.42, top=0.78, bottom=0.28)
+    fig, axes = plt.subplots(1, 3, figsize=(10.0, 4.0))
+    fig.subplots_adjust(wspace=0.38, top=0.80, bottom=0.28)
 
-    for ax, (ml, lbl) in zip(axes, conditions):
-        grp      = ba[ba.matchup_label == ml]
-        belief_r = grp["terminal_reward_0"].values
-        static_r = grp["terminal_reward_1"].values
-        diff     = belief_r - static_r
+    for ax, (matchup, label) in zip(axes, conditions):
+        subset = df[df["matchup_label"] == matchup]
+        diff = subset["terminal_reward_0"] - subset["terminal_reward_1"]
+        bound = max(200, int(math.ceil(np.nanpercentile(np.abs(diff), 99) / 50.0) * 50))
+        bins = np.linspace(-bound, bound, 36)
 
-        bins = np.linspace(-700, 700, 45)
-        ax.hist(diff, bins=bins, color=C_BELIEF, alpha=0.72,
-                edgecolor="none", zorder=3)
-        ax.axvline(0, color="black", linewidth=1.0, linestyle="--", alpha=0.6, zorder=4)
-        # Mean line — no legend label (annotation goes below x-axis instead)
-        ax.axvline(diff.mean(), color=C_BELIEF, linewidth=1.8, linestyle="-", zorder=5)
+        ax.hist(diff, bins=bins, color=C_BELIEF, alpha=0.78, edgecolor="none", zorder=3)
+        ax.axvline(0, color="black", linewidth=1.0, linestyle="--", alpha=0.55, zorder=4)
+        ax.axvline(diff.mean(), color=C_SWITCH, linewidth=1.8, zorder=5)
 
-        t, p = stats.ttest_rel(belief_r, static_r)
-        p_str = f"p = {p:.3f}" if p >= 0.001 else "p < 0.001"
+        t_stat, p_val = stats.ttest_rel(subset["terminal_reward_0"], subset["terminal_reward_1"])
+        mean, lo, hi = _ci(diff)
+        p_text = f"p = {p_val:.3f}" if p_val >= 0.001 else "p < 0.001"
 
-        # ── Sub-axis annotation row, below x-axis label ──────────────────────
-        # Left: mean value (coloured to match the mean line)
-        ax.text(0.0, -0.30, f"Mean = {diff.mean():.1f}",
-                transform=ax.transAxes, ha="left", va="top",
-                fontsize=9.5, color=C_BELIEF)
-        # Right: t and p stats
-        ax.text(1.0, -0.30, f"$t$ = {t:.2f},  {p_str}",
-                transform=ax.transAxes, ha="right", va="top",
-                fontsize=9.5, color="#333333")
+        ax.text(0.0, -0.30, f"Mean = {mean:.1f} [{lo:.1f}, {hi:.1f}]",
+                transform=ax.transAxes, ha="left", va="top", fontsize=9, color=C_SWITCH)
+        ax.text(1.0, -0.30, f"t = {t_stat:.2f}, {p_text}",
+                transform=ax.transAxes, ha="right", va="top", fontsize=9, color="#333333")
 
-        # Panel title with extra padding
-        ax.set_title(lbl, fontsize=12, pad=10, fontweight="bold")
-        ax.set_xlabel("Δ chips/hand  (Belief-EV − Static-EV)", fontsize=10, labelpad=5)
-        # Shift x-axis label 2 pts left on rightmost subplot only
-        if ax is axes[2]:
-            ax.xaxis.set_label_coords(0.47, -0.13)
+        ax.set_title(label, fontweight="bold", pad=10)
+        ax.set_xlabel("Per-hand differential\n(Belief-EV − Static-EV)")
         if ax is axes[0]:
-            ax.set_ylabel("Frequency", fontsize=10)
+            ax.set_ylabel("Frequency")
         ax.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6, zorder=0)
-        ax.tick_params(labelsize=9.5)
 
-    # suptitle well above the panel titles
     fig.suptitle(
-        "Experiment 2 — Belief ablation: per-hand chip differential, "
-        "Belief-EV vs. Static-EV (head-to-head)\n"
-        "n = 5,000 hands per condition; dashed vertical line = zero",
-        fontsize=11, y=1.01,
+        "Experiment 2 — Direct ablation of belief updating\n"
+        "(15,000 hands total; 5,000 hands per condition)"
     )
-    fig.savefig(f"{OUT}/fig2_belief_ablation.pdf", bbox_inches="tight")
-    fig.savefig(f"{OUT}/fig2_belief_ablation.png", bbox_inches="tight")
-    plt.close(fig)
-    print("Fig 2 saved.")
+    _save(fig, "fig2_belief_ablation")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIG 3 — Robustness: dev vs held-out with seed-level scatter
-# ─────────────────────────────────────────────────────────────────────────────
-def fig_robustness():
-    mc  = pd.read_csv("outputs/processed/main_comparison_summary.csv")
-    rob = pd.read_csv("outputs/processed/robustness_summary.csv")
+def fig_calibration() -> None:
+    entropy_by_family: dict[str, list[float]] = defaultdict(list)
+    for path_str in glob.glob(str(RAW / "calibration_*_seed*.json")):
+        path = Path(path_str)
+        family = path.stem.split("belief_calibration_")[1].split("_seed")[0]
+        for hand in _load_json(path):
+            for step in hand.get("action_history", []):
+                if step.get("player") == 0 and step.get("posterior_entropy") is not None:
+                    entropy_by_family[family].append(_entropy_bits(float(step["posterior_entropy"])))
 
-    def seed_means(df, matchup):
-        return df[df.matchup_label == matchup].groupby("seed")["terminal_reward_0"].mean().values
-
-    entries = [
-        # (label,                 values,                                 color,       hatch)
-        ("Heuristic\nDev",         seed_means(mc,  "heuristic_vs_balanced"),       C_HEURISTIC, ""),
-        ("Heuristic\nHeld-out 1",  seed_means(rob, "heuristic_vs_held_out_1"),     C_HEURISTIC, "//"),
-        ("Heuristic\nHeld-out 2",  seed_means(rob, "heuristic_vs_held_out_2"),     C_HEURISTIC, "xx"),
-        ("Static-EV\nDev",         seed_means(mc,  "ev_static_vs_balanced"),       C_STATIC,    ""),
-        ("Static-EV\nHeld-out 1",  seed_means(rob, "ev_static_vs_held_out_1"),     C_STATIC,    "//"),
-        ("Static-EV\nHeld-out 2",  seed_means(rob, "ev_static_vs_held_out_2"),     C_STATIC,    "xx"),
-        ("Belief-EV\nDev",         seed_means(mc,  "ev_belief_vs_balanced"),       C_BELIEF,    ""),
-        ("Belief-EV\nHeld-out 1",  seed_means(rob, "ev_belief_vs_held_out_1"),     C_BELIEF,    "//"),
-        ("Belief-EV\nHeld-out 2",  seed_means(rob, "ev_belief_vs_held_out_2"),     C_BELIEF,    "xx"),
-    ]
-
-    fig, ax = plt.subplots(figsize=(7.5, 3.8))
-    xs = np.arange(len(entries))
-
-    for i, (lbl, vals, col, hatch) in enumerate(entries):
-        m = vals.mean()
-        lo, hi = bootstrap_ci(vals)
-        ax.bar(xs[i], m, color=col, alpha=0.82, width=0.65,
-               hatch=hatch, edgecolor="white" if not hatch else col,
-               linewidth=0.6, zorder=3)
-        ax.errorbar(xs[i], m,
-                    yerr=[[m - lo], [hi - m]],
-                    fmt="none", color="#222222", capsize=4,
-                    capthick=1.1, elinewidth=1.1, zorder=4)
-        rng_j = np.random.default_rng(i + 42)
-        jitter = rng_j.uniform(-0.20, 0.20, len(vals))
-        ax.scatter(xs[i] + jitter, vals, color="#222222",
-                   s=10, zorder=5, alpha=0.55)
-
-    for xd in [2.5, 5.5]:
-        ax.axvline(xd, color="0.65", linewidth=0.8, linestyle="--")
-
-    ax.set_xticks(xs)
-    ax.set_xticklabels([e[0] for e in entries], fontsize=9)
-    ax.set_ylabel("Mean chips won per hand", labelpad=6)
-    ax.set_ylim(0, 230)
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
-    ax.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6, zorder=0)
-
-    legend_patches = [
-        mpatches.Patch(facecolor="0.5", label="Dev (no hatch)"),
-        mpatches.Patch(facecolor="0.5", hatch="//", edgecolor="0.5", label="Held-out 1  (//)"),
-        mpatches.Patch(facecolor="0.5", hatch="xx", edgecolor="0.5", label="Held-out 2  (×)"),
-    ]
-    ax.legend(handles=legend_patches, loc="lower right",
-              frameon=True, framealpha=0.92, edgecolor="0.75",
-              fontsize=9.5, borderpad=0.7)
-
-    ax.set_title(
-        "Experiment 4 — Robustness: development vs. held-out opponent families\n"
-        "(dots = individual seeds; error bars = 95% bootstrap CI)",
-        fontsize=11,
-    )
-    fig.tight_layout(pad=1.3)
-    fig.savefig(f"{OUT}/fig4_robustness.pdf")
-    fig.savefig(f"{OUT}/fig4_robustness.png")
-    plt.close(fig)
-    print("Fig 3 saved.")
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# FIG 4 — Calibration: posterior entropy KDE  +  action frequency profile
-# ─────────────────────────────────────────────────────────────────────────────
-def fig_calibration():
-    # ── Posterior entropy ────────────────────────────────────────────────────
-    entropy_by_family = defaultdict(list)
-    for fpath in sorted(glob.glob(
-            "outputs/raw_runs/calibration_belief_calibration_*_seed*.json")):
-        family = fpath.split("belief_calibration_")[1].split("_seed")[0]
-        with open(fpath) as f:
-            hands = json.load(f)
-        for hand in hands:
-            for act in hand.get("action_history", []):
-                if isinstance(act, dict) and act.get("player") == 0:
-                    ent = act.get("posterior_entropy")
-                    if ent is not None:
-                        entropy_by_family[family].append(ent)
-
-    # ── Action frequencies ───────────────────────────────────────────────────
-    agent_action_data = {}
-    for ag_lbl, matchup in [
-        ("Heuristic", "main_comparison_heuristic_vs_balanced"),
-        ("Static-EV",  "main_comparison_ev_static_vs_balanced"),
-        ("Belief-EV",  "main_comparison_ev_belief_vs_balanced"),
-    ]:
-        acts = Counter()
-        for fpath in sorted(glob.glob(f"outputs/raw_runs/{matchup}_seed*.json")):
-            with open(fpath) as f:
-                hands = json.load(f)
-            for hand in hands:
-                for a in hand.get("action_history", []):
-                    if isinstance(a, dict) and a.get("player") == 0:
-                        acts[a.get("action", "")] += 1
-        total = sum(acts.values())
-        agent_action_data[ag_lbl] = {k: v / total for k, v in acts.items()}
-
-    # ── Layout: 1 row × 2 panels ─────────────────────────────────────────────
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.0, 3.6))
-    fig.subplots_adjust(wspace=0.40)
-
-    # — Left: entropy KDE —
-    fam_map = {
-        "balanced":   ("Balanced",   "#2166AC"),
-        "aggressive": ("Aggressive", "#D6604D"),
-        "maniac":     ("Maniac",     "#4DAC26"),
+    action_counts = {
+        "Heuristic": Counter(),
+        "Static-EV": Counter(),
+        "Belief-EV": Counter(),
     }
-    max_ent = np.log2(7)
-
-    for fam, (lbl, col) in fam_map.items():
-        vals = entropy_by_family.get(fam, [])
-        if not vals:
+    action_map = {
+        "heuristic_vs_": "Heuristic",
+        "ev_static_vs_": "Static-EV",
+        "ev_belief_vs_": "Belief-EV",
+    }
+    for path_str in glob.glob(str(RAW / "main_comparison_*_seed*.json")):
+        path = Path(path_str)
+        stem = path.stem.replace("main_comparison_", "", 1)
+        agent_label = None
+        for prefix, name in action_map.items():
+            if stem.startswith(prefix):
+                agent_label = name
+                break
+        if agent_label is None:
             continue
-        kde  = gaussian_kde(vals, bw_method=0.25)
-        xs   = np.linspace(1.75, 2.00, 400)
-        ys   = kde(xs)
-        ax1.plot(xs, ys, color=col, linewidth=1.8, label=lbl)
-        ax1.fill_between(xs, ys, alpha=0.12, color=col)
-        ax1.axvline(np.mean(vals), color=col, linewidth=1.0,
-                    linestyle="--", alpha=0.75)
+        for hand in _load_json(path):
+            for step in hand.get("action_history", []):
+                if step.get("player") == 0:
+                    action_counts[agent_label][step.get("action", "")] += 1
 
-    ax1.axvline(max_ent, color="black", linewidth=1.0, linestyle=":",
-                label=f"Max entropy\n(H = {max_ent:.2f} bits)")
-    ax1.set_xlabel("Posterior entropy (bits)", labelpad=5)
-    ax1.set_ylabel("Density", labelpad=5)
-    ax1.set_title("Posterior entropy by opponent family", fontsize=11, pad=6)
-    # Place legend slightly left of upper-right corner
-    ax1.legend(frameon=True, framealpha=0.9, edgecolor="0.8",
-               fontsize=9.0, loc="upper right",
-               bbox_to_anchor=(0.93, 1.0), borderpad=0.6)
-    ax1.grid(linestyle=":", linewidth=0.5, alpha=0.55)
-    ax1.tick_params(labelsize=10)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.6, 3.8))
+    fig.subplots_adjust(wspace=0.38)
 
-    # — Right: action frequency grouped bars —
-    action_order  = ["fold", "call", "check", "bet_half_pot", "bet_pot", "jam"]
-    action_labels = ["Fold", "Call", "Check", "Bet ½", "Bet 1×", "Jam"]
-    agent_list    = ["Heuristic", "Static-EV", "Belief-EV"]
-    agent_cols_r  = [C_HEURISTIC, C_STATIC, C_BELIEF]
-    bar_w = 0.24
-    xs2   = np.arange(len(action_order))
+    for family in ["balanced", "aggressive", "maniac"]:
+        values = entropy_by_family.get(family, [])
+        if len(values) < 2:
+            continue
+        xs = np.linspace(min(values), max(values), 300)
+        kde = gaussian_kde(values, bw_method=0.25)
+        ys = kde(xs)
+        ax1.plot(xs, ys, color=FAMILY_COLORS[family], linewidth=1.8, label=FAMILY_LABELS[family])
+        ax1.fill_between(xs, ys, alpha=0.15, color=FAMILY_COLORS[family])
+        ax1.axvline(np.mean(values), color=FAMILY_COLORS[family], linewidth=1.0, linestyle="--", alpha=0.8)
 
-    for j, (ag, col) in enumerate(zip(agent_list, agent_cols_r)):
-        freqs  = [agent_action_data[ag].get(a, 0) for a in action_order]
-        offset = (j - 1) * bar_w
-        ax2.bar(xs2 + offset, freqs, width=bar_w, color=col,
-                alpha=0.88, label=ag, zorder=3,
-                edgecolor="white", linewidth=0.4)
+    max_entropy = math.log2(7)
+    ax1.axvline(max_entropy, color="black", linewidth=1.0, linestyle=":", label=f"Max = {max_entropy:.3f} bits")
+    ax1.set_xlabel("Posterior entropy (bits)")
+    ax1.set_ylabel("Density")
+    ax1.set_title("Calibration entropy by opponent family")
+    ax1.grid(linestyle=":", linewidth=0.5, alpha=0.6)
+    ax1.legend(frameon=True, framealpha=0.92, edgecolor="0.8", loc="upper left")
 
-    ax2.set_xticks(xs2)
-    ax2.set_xticklabels(action_labels, fontsize=10)
-    ax2.set_ylabel("Proportion of decisions", labelpad=5)
-    ax2.set_ylim(0, 0.70)
-    ax2.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
-    ax2.set_title("Action frequency profile by agent type", fontsize=11, pad=6)
-    ax2.legend(frameon=True, framealpha=0.9, edgecolor="0.8",
-               fontsize=9.5, loc="upper right", borderpad=0.7)
+    action_order = ["fold", "call", "check", "bet_half_pot", "bet_pot", "jam"]
+    action_labels = ["Fold", "Call", "Check", "Bet 1/2", "Bet pot", "Jam"]
+    x = np.arange(len(action_order))
+    width = 0.24
+    action_colors = [C_HEURISTIC, C_STATIC, C_BELIEF]
+    for idx, (agent_label, color) in enumerate(zip(action_counts.keys(), action_colors)):
+        counts = action_counts[agent_label]
+        total = max(1, sum(counts.values()))
+        freqs = [counts.get(action, 0) / total for action in action_order]
+        offset = (idx - 1) * width
+        ax2.bar(
+            x + offset,
+            freqs,
+            width=width,
+            color=color,
+            alpha=0.88,
+            label=agent_label,
+            edgecolor="white",
+            linewidth=0.5,
+            zorder=3,
+        )
+
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(action_labels, rotation=15)
+    ax2.set_ylabel("Share of player-0 decisions")
+    ax2.set_ylim(0, 0.75)
+    ax2.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+    ax2.set_title("Action profile across development opponents")
     ax2.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6, zorder=0)
-    ax2.tick_params(labelsize=10)
+    ax2.legend(frameon=True, framealpha=0.92, edgecolor="0.8", loc="upper right")
 
-    fig.suptitle(
-        "Experiment 3 — Belief calibration and behavioural profiles",
-        fontsize=12, y=1.03,
-    )
-    fig.savefig(f"{OUT}/fig3_calibration.pdf")
-    fig.savefig(f"{OUT}/fig3_calibration.png")
-    plt.close(fig)
-    print("Fig 4 saved.")
+    fig.suptitle("Experiment 3 — Calibration and behavioral profiles (10,000 calibration hands)", y=1.02)
+    _save(fig, "fig3_calibration")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIG 5 — Seed-level stability across 5 independent runs
-# ─────────────────────────────────────────────────────────────────────────────
-def fig_seed_variance():
-    mc = pd.read_csv("outputs/processed/main_comparison_summary.csv")
+def fig_robustness() -> None:
+    main_df = _read_processed("main_comparison")
+    rob_df = _read_processed("robustness")
+    agent_order = ["HeuristicAgent", "StaticEVAgent", "BeliefEVAgent"]
 
-    matchups = [
-        ("heuristic_vs_balanced",   "HeuristicAgent", "Heuristic (Balanced)",   C_HEURISTIC, "o", "-"),
-        ("ev_static_vs_balanced",   "StaticEVAgent",  "Static-EV (Balanced)",   C_STATIC,    "s", "-"),
-        ("ev_belief_vs_balanced",   "BeliefEVAgent",  "Belief-EV (Balanced)",   C_BELIEF,    "^", "-"),
-        ("ev_belief_vs_aggressive", "BeliefEVAgent",  "Belief-EV (Aggressive)", C_BELIEF,    "^", "--"),
-        ("ev_belief_vs_passive",    "BeliefEVAgent",  "Belief-EV (Passive)",    C_BELIEF,    "^", ":"),
-    ]
+    def seed_values(df: pd.DataFrame, agent: str, family: str | None = None) -> np.ndarray:
+        subset = df[df["agent0_type"] == agent]
+        if family is not None:
+            subset = subset[subset["behavior_family_1"] == family]
+        return subset.groupby("seed")["terminal_reward_0"].mean().to_numpy()
 
-    fig, ax = plt.subplots(figsize=(5.5, 3.5))
-    seeds = sorted(mc["seed"].unique())
+    fig, ax = plt.subplots(figsize=(8.6, 4.2))
+    labels = ["Development", "Held-out 1", "Held-out 2"]
+    x = np.arange(len(labels))
+    width = 0.24
 
-    for ml, at, lbl, col, marker, ls in matchups:
-        grp = mc[(mc.matchup_label == ml) & (mc.agent0_type == at)]
-        if grp.empty:
-            continue
-        means = grp.groupby("seed")["terminal_reward_0"].mean().reindex(seeds).values
-        ax.plot(seeds, means, marker=marker, markersize=5.5, color=col,
-                linestyle=ls, label=lbl, linewidth=1.5, markeredgecolor="white",
-                markeredgewidth=0.5)
+    for idx, agent in enumerate(agent_order):
+        dev_values = seed_values(main_df, agent)
+        h1_values = seed_values(rob_df, agent, "held_out_1")
+        h2_values = seed_values(rob_df, agent, "held_out_2")
+        grouped = [dev_values, h1_values, h2_values]
 
-    ax.set_xlabel("Random seed", labelpad=5)
-    ax.set_ylabel("Mean chips won per hand", labelpad=5)
-    ax.set_xticks(seeds)
-    ax.set_ylim(60, 230)
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(40))
-    ax.grid(linestyle=":", linewidth=0.5, alpha=0.6)
-    ax.tick_params(labelsize=10)
-    ax.legend(frameon=True, framealpha=0.92, edgecolor="0.8",
-              fontsize=6.0, loc="upper right", borderpad=0.5,
-              labelspacing=0.22, handlelength=1.4, handletextpad=0.4)
+        means = []
+        lowers = []
+        uppers = []
+        for values in grouped:
+            mean, lo, hi = _ci(values)
+            means.append(mean)
+            lowers.append(mean - lo)
+            uppers.append(hi - mean)
+
+        offset = (idx - 1) * width
+        ax.bar(
+            x + offset,
+            means,
+            width=width,
+            color=AGENT_COLORS[agent],
+            alpha=0.9,
+            label=AGENT_LABELS[agent],
+            edgecolor="white",
+            linewidth=0.6,
+            zorder=3,
+        )
+        ax.errorbar(
+            x + offset,
+            means,
+            yerr=[lowers, uppers],
+            fmt="none",
+            color="#222222",
+            capsize=4,
+            elinewidth=1.0,
+            zorder=4,
+        )
+        rng = np.random.default_rng(idx + 17)
+        for jdx, values in enumerate(grouped):
+            jitter = rng.uniform(-0.05, 0.05, size=len(values))
+            ax.scatter(np.full(len(values), x[jdx] + offset) + jitter, values, s=16, color="#222222", alpha=0.55, zorder=5)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Seed-level mean net chips won per hand")
     ax.set_title(
-        "Seed-to-seed stability across 5 independent replications\n"
-        "(n = 1,000 hands per seed)",
-        fontsize=11, pad=6,
+        "Experiment 4 — Robustness to held-out opponent families\n"
+        "(Development baseline = all three development families; dots = seeds)"
     )
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(25))
+    ax.grid(axis="y", linestyle=":", linewidth=0.6, alpha=0.7, zorder=0)
+    ax.legend(frameon=True, framealpha=0.92, edgecolor="0.8", loc="upper left")
 
-    fig.tight_layout(pad=1.3)
-    fig.savefig(f"{OUT}/fig5_seed_variance.pdf")
-    fig.savefig(f"{OUT}/fig5_seed_variance.png")
-    plt.close(fig)
-    print("Fig 5 saved.")
+    _save(fig, "fig4_robustness")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-if __name__ == "__main__":
+def fig_main_study_diagnostics() -> None:
+    main_ids = ["main_comparison", "belief_ablation", "calibration", "robustness"]
+    frames = [_read_processed(exp_id) for exp_id in main_ids]
+    combined = pd.concat(frames, ignore_index=True)
+    main_df = frames[0]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.2, 3.8))
+    fig.subplots_adjust(wspace=0.34)
+
+    for agent in ["HeuristicAgent", "StaticEVAgent", "BeliefEVAgent"]:
+        subset = main_df[main_df["agent0_type"] == agent]
+        if subset.empty:
+            continue
+        seed_means = subset.groupby("seed")["terminal_reward_0"].mean()
+        ax1.plot(
+            seed_means.index,
+            seed_means.values,
+            marker="o",
+            color=AGENT_COLORS[agent],
+            linewidth=1.8,
+            label=AGENT_LABELS[agent],
+        )
+
+    ax1.set_xlabel("Random seed")
+    ax1.set_ylabel("Mean net chips won per hand")
+    ax1.set_title("Seed-level stability in the main comparison")
+    ax1.grid(linestyle=":", linewidth=0.5, alpha=0.6)
+    ax1.legend(frameon=True, framealpha=0.92, edgecolor="0.8", loc="best")
+
+    counts = combined["first_to_act"].value_counts().reindex([0, 1], fill_value=0)
+    bars = ax2.bar(
+        ["Player 0 first", "Player 1 first"],
+        counts.values,
+        color=[C_STATIC, C_SWITCH],
+        alpha=0.88,
+        edgecolor="white",
+        linewidth=0.6,
+    )
+    for bar, value in zip(bars, counts.values):
+        ax2.text(bar.get_x() + bar.get_width() / 2, value + 800, f"{int(value):,}", ha="center", va="bottom", fontsize=10)
+    ax2.set_ylabel("Hands in the 100,000-hand main study")
+    ax2.set_title("Alternating first-to-act assignment")
+    ax2.yaxis.set_major_locator(mticker.MultipleLocator(10000))
+    ax2.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6)
+
+    fig.suptitle("Figure 5 — Main-study diagnostics and design checks", y=1.02)
+    _save(fig, "fig5_main_study_diagnostics")
+
+
+def fig_switch_event_study() -> None:
+    df = _read_processed("switch_case_study")
+    adaptive = df[df["matchup_label"] == "adaptive_counter_vs_hidden_switch"].copy()
+    control = df[df["matchup_label"] == "balanced_control_vs_hidden_switch"].copy()
+
+    for frame in (adaptive, control):
+        frame["offset"] = frame["hand_num"] - frame["switch_hand"]
+        frame["offset_bin"] = (np.floor(frame["offset"] / 50) * 50).astype(int)
+
+    window = 1000
+    adaptive_plot = adaptive[adaptive["offset"].between(-window, window)]
+    control_plot = control[control["offset"].between(-window, window)]
+
+    event_adaptive = adaptive_plot.groupby("offset_bin")["terminal_reward_0"].mean().reset_index()
+    event_control = control_plot.groupby("offset_bin")["terminal_reward_0"].mean().reset_index()
+
+    case_per_seed, _ = compute_switch_case_metrics(df)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.0, 4.0))
+    fig.subplots_adjust(wspace=0.34)
+
+    ax1.plot(event_adaptive["offset_bin"], event_adaptive["terminal_reward_0"], color=C_ADAPTIVE, label="Adaptive responder")
+    ax1.plot(event_control["offset_bin"], event_control["terminal_reward_0"], color=C_CONTROL, label="Balanced control")
+    ax1.axvline(0, color="black", linestyle="--", linewidth=1.0, alpha=0.65)
+    ax1.set_xlabel("Hands relative to hidden switch")
+    ax1.set_ylabel("Average net chips won per hand")
+    ax1.set_title("Event-study reward trace around the hidden switch")
+    ax1.grid(linestyle=":", linewidth=0.5, alpha=0.6)
+    ax1.legend(frameon=True, framealpha=0.92, edgecolor="0.8", loc="best")
+
+    grouped = {
+        "Adaptive\npre": case_per_seed["pre_adaptive_reward"],
+        "Adaptive\npost": case_per_seed["post_adaptive_reward"],
+        "Control\npre": case_per_seed["pre_control_reward"],
+        "Control\npost": case_per_seed["post_control_reward"],
+    }
+    colors = [C_ADAPTIVE, C_ADAPTIVE, C_CONTROL, C_CONTROL]
+    means, lowers, uppers = [], [], []
+    for values in grouped.values():
+        mean, lo, hi = _ci(values)
+        means.append(mean)
+        lowers.append(mean - lo)
+        uppers.append(hi - mean)
+    xpos = np.arange(len(grouped))
+    ax2.bar(xpos, means, color=colors, alpha=0.88, edgecolor="white", linewidth=0.6, zorder=3)
+    ax2.errorbar(xpos, means, yerr=[lowers, uppers], fmt="none", color="#222222", capsize=4, elinewidth=1.0, zorder=4)
+    ax2.set_xticks(xpos)
+    ax2.set_xticklabels(list(grouped.keys()))
+    ax2.set_ylabel("Seed-level mean net chips won per hand")
+    ax2.set_title("Pre- and post-switch reward levels")
+    ax2.grid(axis="y", linestyle=":", linewidth=0.5, alpha=0.6, zorder=0)
+
+    fig.suptitle("Figure 6 — Hidden-switch case study: event trace and pre/post outcomes", y=1.02)
+    _save(fig, "fig6_switch_event_study")
+
+
+def fig_switch_detection() -> None:
+    df = _read_processed("switch_case_study")
+    case_per_seed, case_summary = compute_switch_case_metrics(df)
+    if case_per_seed.empty:
+        raise ValueError("Switch case-study metrics are empty.")
+
+    case_per_seed = case_per_seed.sort_values("seed").copy()
+    family_colors = [FAMILY_COLORS.get(family, C_SWITCH) for family in case_per_seed["true_family_post"]]
+    edge_colors = ["black" if ok else "#9B2C2C" for ok in case_per_seed["family_identification_correct"]]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.2, 4.0))
+    fig.subplots_adjust(wspace=0.34)
+
+    detected = case_per_seed["detection_hand"].fillna(case_per_seed["switch_hand"])
+    ax1.scatter(
+        case_per_seed["switch_hand"],
+        detected,
+        s=80,
+        c=family_colors,
+        edgecolors=edge_colors,
+        linewidths=1.2,
+        alpha=0.92,
+    )
+    low = min(case_per_seed["switch_hand"].min(), detected.min()) - 100
+    high = max(case_per_seed["switch_hand"].max(), detected.max()) + 100
+    ax1.plot([low, high], [low, high], linestyle="--", color="black", linewidth=1.0, alpha=0.6)
+    for _, row in case_per_seed.iterrows():
+        ax1.text(row["switch_hand"] + 25, (row["detection_hand"] if pd.notna(row["detection_hand"]) else row["switch_hand"]) + 25, str(int(row["seed"])), fontsize=8)
+    ax1.set_xlabel("True hidden-switch hand")
+    ax1.set_ylabel("Detected switch hand")
+    ax1.set_title("Detection timing by seed")
+    ax1.grid(linestyle=":", linewidth=0.5, alpha=0.6)
+
+    y = np.arange(len(case_per_seed))
+    bars = ax2.barh(
+        y,
+        case_per_seed["post_switch_lift_vs_control"],
+        color=family_colors,
+        alpha=0.88,
+        edgecolor=edge_colors,
+        linewidth=1.1,
+    )
+    ax2.axvline(0, color="black", linestyle="--", linewidth=1.0, alpha=0.6)
+    ax2.set_yticks(y)
+    ax2.set_yticklabels([f"Seed {int(seed)}" for seed in case_per_seed["seed"]])
+    ax2.set_xlabel("Post-switch lift vs. balanced control")
+    ax2.set_title(
+        "Adaptive benefit by seed\n"
+        f"(mean lift = {case_summary['mean_post_switch_lift_vs_control'].iloc[0]:.2f} chips/hand)"
+    )
+    ax2.grid(axis="x", linestyle=":", linewidth=0.5, alpha=0.6)
+
+    legend_handles = [
+        mpatches.Patch(color=FAMILY_COLORS["aggressive"], label="Switch to aggressive"),
+        mpatches.Patch(color=FAMILY_COLORS["passive"], label="Switch to passive"),
+        mpatches.Patch(color=FAMILY_COLORS["trappy"], label="Switch to trappy"),
+    ]
+    ax2.legend(handles=legend_handles, frameon=True, framealpha=0.92, edgecolor="0.8", loc="upper left")
+
+    fig.suptitle("Figure 7 — Hidden-switch case study: detection timing and adaptive lift", y=1.02)
+    _save(fig, "fig7_switch_detection")
+
+
+def main() -> None:
     fig_main_comparison()
     fig_belief_ablation()
-    fig_robustness()
     fig_calibration()
-    fig_seed_variance()
-    print(f"\nAll figures saved to {OUT}/")
+    fig_robustness()
+    fig_main_study_diagnostics()
+    fig_switch_event_study()
+    fig_switch_detection()
+    print(f"All figures saved to {OUT}")
+
+
+if __name__ == "__main__":
+    main()

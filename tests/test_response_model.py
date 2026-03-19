@@ -14,6 +14,7 @@ def make_pub(last_bet=0, pot=100, street="turn"):
         street=street,
         to_act=0,
         last_bet=last_bet,
+        first_to_act=0,
         history=[],
     )
 

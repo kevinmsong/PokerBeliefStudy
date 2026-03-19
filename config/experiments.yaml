@@ -1,115 +1,162 @@
 # Experiment configurations
 
 main_comparison:
-  description: "Compare all three agent types across development opponents"
+  description: "Compare the three study agents against family-conditioned policy opponents"
   seeds: [42, 43, 44, 45, 46]
   hands_per_seed: 1000
   matchups:
     - label: "heuristic_vs_balanced"
       agent0: {name: HeuristicAgent, label: heuristic}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: balanced
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: balanced
+    - label: "heuristic_vs_aggressive"
+      agent0: {name: HeuristicAgent, label: heuristic}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: aggressive
+    - label: "heuristic_vs_passive"
+      agent0: {name: HeuristicAgent, label: heuristic}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: passive
     - label: "ev_static_vs_balanced"
       agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: balanced
-      opp_family_1: balanced
-    - label: "ev_belief_vs_balanced"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: balanced
-      opp_family_1: balanced
-    - label: "ev_belief_vs_aggressive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: aggressive
-      opp_family_1: balanced
-    - label: "ev_belief_vs_passive"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: passive
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: balanced
+      model_family_0: balanced
     - label: "ev_static_vs_aggressive"
       agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: aggressive
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: aggressive
+      model_family_0: aggressive
+    - label: "ev_static_vs_passive"
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: passive
+      model_family_0: passive
+    - label: "ev_belief_vs_balanced"
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: balanced
+      model_family_0: balanced
+    - label: "ev_belief_vs_aggressive"
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: aggressive
+      model_family_0: aggressive
+    - label: "ev_belief_vs_passive"
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: passive
+      model_family_0: passive
 
 calibration:
-  description: "Calibration analysis of belief agent"
-  seeds: [42]
-  hands_per_seed: 500
+  description: "Calibration analysis of the belief agent against family-conditioned opponents"
+  seeds: [42, 43, 44, 45, 46]
+  hands_per_seed: 650
   matchups:
     - label: "belief_calibration_balanced"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: balanced
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: balanced
+      model_family_0: balanced
+      hands_per_seed: 700
     - label: "belief_calibration_aggressive"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: aggressive
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: aggressive
+      model_family_0: aggressive
     - label: "belief_calibration_maniac"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: maniac
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: maniac
+      model_family_0: maniac
 
 robustness:
-  description: "Robustness to held-out opponent families"
-  seeds: [42, 43, 44]
+  description: "Robustness to held-out family-conditioned opponents"
+  seeds: [42, 43, 44, 45, 46]
   hands_per_seed: 1000
   matchups:
-    - label: "ev_belief_vs_held_out_1"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_1
-      opp_family_1: balanced
-    - label: "ev_belief_vs_held_out_2"
-      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_2
-      opp_family_1: balanced
-    - label: "ev_static_vs_held_out_1"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_1
-      opp_family_1: balanced
-    - label: "ev_static_vs_held_out_2"
-      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_2
-      opp_family_1: balanced
     - label: "heuristic_vs_held_out_1"
       agent0: {name: HeuristicAgent, label: heuristic}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_1
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_1
     - label: "heuristic_vs_held_out_2"
       agent0: {name: HeuristicAgent, label: heuristic}
-      agent1: {name: HeuristicAgent, label: heuristic}
-      opp_family_0: held_out_2
-      opp_family_1: balanced
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_2
+    - label: "ev_static_vs_held_out_1"
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_1
+      model_family_0: balanced
+    - label: "ev_static_vs_held_out_2"
+      agent0: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_2
+      model_family_0: balanced
+    - label: "ev_belief_vs_held_out_1"
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_1
+      model_family_0: balanced
+    - label: "ev_belief_vs_held_out_2"
+      agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
+      agent1: {name: FamilyPolicyAgent, label: family_policy}
+      behavior_family_1: held_out_2
+      model_family_0: balanced
 
 belief_ablation:
-  description: "Ablation study: belief updating vs static prior"
-  seeds: [42, 43]
+  description: "Ablation study: belief updating vs static prior in direct competition"
+  seeds: [42, 43, 44, 45, 46]
   hands_per_seed: 1000
   matchups:
     - label: "belief_vs_static_balanced"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      opp_family_0: balanced
-      opp_family_1: balanced
+      model_family_0: balanced
+      model_family_1: balanced
     - label: "belief_vs_static_aggressive"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      opp_family_0: aggressive
-      opp_family_1: balanced
+      model_family_0: aggressive
+      model_family_1: aggressive
     - label: "belief_vs_static_trappy"
       agent0: {name: BeliefEVAgent, label: ev_belief, n_rollouts: 50, prior: uniform, smoothing: 0.05}
       agent1: {name: StaticEVAgent, label: ev_static, n_rollouts: 50, prior: uniform}
-      opp_family_0: trappy
-      opp_family_1: balanced
+      model_family_0: trappy
+      model_family_1: trappy
+
+switch_case_study:
+  description: "Hidden behavior switch with adaptive counter-style response and balanced control"
+  seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  hands_per_seed: 5000
+  matchups:
+    - label: "adaptive_counter_vs_hidden_switch"
+      agent0:
+        name: AdaptiveCounterFamilyAgent
+        label: adaptive_counter
+        candidate_families: [aggressive, passive, trappy]
+        evidence_window: 80
+        evidence_threshold: 4.0
+        min_observations: 30
+        min_hand_before_switch: 1875
+        counter_map:
+          aggressive: tight
+          passive: aggressive
+          trappy: balanced
+      agent1: {name: FamilyPolicyAgent, label: hidden_switcher}
+      behavior_family_0: balanced
+      behavior_family_1: balanced
+      model_family_0: balanced
+      pre_switch_family: balanced
+      switching_player: 1
+      switch_candidates: [aggressive, passive, trappy]
+      switch_schedule_group: hidden_switch_pair
+    - label: "balanced_control_vs_hidden_switch"
+      agent0: {name: FamilyPolicyAgent, label: balanced_control}
+      agent1: {name: FamilyPolicyAgent, label: hidden_switcher}
+      behavior_family_0: balanced
+      behavior_family_1: balanced
+      pre_switch_family: balanced
+      switching_player: 1
+      switch_candidates: [aggressive, passive, trappy]
+      switch_schedule_group: hidden_switch_pair

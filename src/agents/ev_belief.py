@@ -37,7 +37,7 @@ class BeliefEVAgent(BaseAgent):
         name: str = "BeliefEVAgent",
     ):
         super().__init__(name=name, player_idx=player_idx, rng=rng)
-        self.opp_family = opp_family
+        self.model_family = opp_family
         self.n_rollouts = n_rollouts
         self.smoothing = smoothing
         self.response_model = response_model or make_default_response_model()
@@ -140,6 +140,7 @@ class BeliefEVAgent(BaseAgent):
             street=infostate.street,
             to_act=1 - self.player_idx,
             last_bet=bet_amount,
+            first_to_act=infostate.to_act,
             history=list(infostate.history),
         )
 
@@ -157,7 +158,7 @@ class BeliefEVAgent(BaseAgent):
             resp = self.response_model.action_probs(
                 hand_class=hand_class,
                 public_state=synth_state,
-                family_name=self.opp_family,
+                family_name=self.model_family,
                 legal_actions=facing_bet_legal,
             )
             avg_fold += prob * resp.get("fold", 0)
@@ -181,7 +182,7 @@ class BeliefEVAgent(BaseAgent):
             action=action,
             public_state=public_state,
             response_model=self.response_model,
-            opp_family=self.opp_family,
+            opp_family=self.model_family,
         )
 
     def new_hand(self) -> None:
@@ -190,6 +191,12 @@ class BeliefEVAgent(BaseAgent):
         self._last_ev_table = {}
         self._prior_at_decision = {}
         self._posterior_at_decision = {}
+
+    def set_model_family(self, family_name: str) -> None:
+        self.model_family = family_name
+
+    def get_model_family(self) -> Optional[str]:
+        return self.model_family
 
     def get_ev_table(self) -> Optional[Dict[str, float]]:
         """Return last computed EV table for logging."""

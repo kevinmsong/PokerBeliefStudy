@@ -31,6 +31,7 @@ class PublicState:
     street: str              # "turn" or "river"
     to_act: int
     last_bet: int
+    first_to_act: int
     history: List[Tuple[int, str, int]] = field(default_factory=list)
 
 
@@ -183,7 +184,7 @@ def _advance_or_end(state: FullState) -> FullState:
         # Advance to river
         pub.street = "river"
         pub.last_bet = 0
-        pub.to_act = 0  # Player 0 acts first post-flop
+        pub.to_act = pub.first_to_act
         # River card will be dealt by simulate.py
         return state
     else:
@@ -219,22 +220,32 @@ def make_initial_state(
     board: List[Card],
     hole_cards_0: Tuple[Card, Card],
     hole_cards_1: Tuple[Card, Card],
-    starting_pot: int,
     effective_stack: int,
+    starting_commitment_0: int,
+    starting_commitment_1: int,
+    first_to_act: int = 0,
     street: str = "turn",
 ) -> FullState:
     """Create the initial FullState for a hand."""
+    starting_pot = starting_commitment_0 + starting_commitment_1
     pub = PublicState(
         board=list(board),
         pot=starting_pot,
         street=street,
-        to_act=0,
+        to_act=first_to_act,
         last_bet=0,
+        first_to_act=first_to_act,
         history=[],
     )
     players = [
-        PlayerState(stack=effective_stack, committed=0),
-        PlayerState(stack=effective_stack, committed=0),
+        PlayerState(
+            stack=max(0, effective_stack - starting_commitment_0),
+            committed=starting_commitment_0,
+        ),
+        PlayerState(
+            stack=max(0, effective_stack - starting_commitment_1),
+            committed=starting_commitment_1,
+        ),
     ]
     private_states = [
         PrivateState(hole_cards=hole_cards_0),

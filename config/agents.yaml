@@ -17,3 +17,13 @@ ev_belief:
   prior: uniform
   smoothing: 0.05
   description: "EV-maximizing agent with Bayesian belief updating"
+
+family_policy:
+  name: FamilyPolicyAgent
+  label: family_policy
+  description: "Stochastic family-conditioned opponent policy"
+
+adaptive_counter:
+  name: AdaptiveCounterFamilyAgent
+  label: adaptive_counter
+  description: "Adaptive family-policy responder with hidden-switch detection"

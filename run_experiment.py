@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import json
+from typing import Optional
 
 import yaml
 
@@ -46,7 +47,7 @@ def load_config(config_dir: str) -> dict:
 def run_experiment(
     experiment_name: str,
     seeds: list,
-    hands: int,
+    hands: Optional[int],
     output_dir: str,
     config_dir: str = "config",
     verbose: bool = True,
@@ -60,8 +61,9 @@ def run_experiment(
         Name of experiment defined in config/experiments.yaml.
     seeds : list
         List of integer seeds.
-    hands : int
-        Number of hands per seed.
+    hands : int | None
+        Number of hands per seed. If None, use the experiment default from
+        config/experiments.yaml.
     output_dir : str
         Output directory for results.
     config_dir : str
@@ -85,16 +87,25 @@ def run_experiment(
 
     exp_config = experiments_config[experiment_name]
     matchups = exp_config["matchups"]
+    configured_hands = exp_config.get("hands_per_seed", 100)
+    hands_from_config = hands is None
+    resolved_hands = configured_hands if hands_from_config else hands
+    total_hands = sum(len(seeds) * matchup.get("hands_per_seed", resolved_hands) for matchup in matchups)
+    has_overrides = any("hands_per_seed" in matchup for matchup in matchups)
 
     if verbose:
         print(f"\n{'='*60}")
         print(f"Experiment: {experiment_name}")
         print(f"  Description: {exp_config.get('description', 'N/A')}")
         print(f"  Seeds: {seeds}")
-        print(f"  Hands/seed: {hands}")
+        hands_line = f"  Hands/seed: {resolved_hands}"
+        if hands_from_config:
+            hands_line += " (from config)"
+        if has_overrides:
+            hands_line += "; matchup overrides active"
+        print(hands_line)
         print(f"  Matchups: {len(matchups)}")
-        total = len(matchups) * len(seeds) * hands
-        print(f"  Total hands: {total:,}")
+        print(f"  Total hands: {total_hands:,}")
         print(f"  Output: {output_dir}")
         print(f"{'='*60}\n")
 
@@ -114,7 +125,7 @@ def run_experiment(
     df = run_tournament(
         matchups=matchups,
         seeds=seeds,
-        hands_per_seed=hands,
+        hands_per_seed=resolved_hands,
         config=env_config,
         output_dir=output_dir,
         experiment_id=experiment_name,
@@ -199,8 +210,8 @@ Examples:
     parser.add_argument(
         "--hands", "-n",
         type=int,
-        default=100,
-        help="Number of hands per seed (default: 100)",
+        default=None,
+        help="Default hands per seed. If omitted, use the experiment config.",
     )
     parser.add_argument(
         "--output", "-o",

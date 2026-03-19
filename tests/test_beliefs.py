@@ -16,6 +16,7 @@ def make_test_public_state(last_bet=0):
         street="turn",
         to_act=0,
         last_bet=last_bet,
+        first_to_act=0,
         history=[],
     )
 

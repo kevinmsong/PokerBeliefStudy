@@ -196,14 +196,21 @@ def compute_robustness_metrics(df: pd.DataFrame) -> pd.DataFrame:
         Robustness metrics with performance on dev vs held-out opponents.
     """
     held_out_families = ["held_out_1", "held_out_2"]
+    family_col = "behavior_family_1" if "behavior_family_1" in df.columns else "opponent_family_1"
+
+    if family_col not in df.columns:
+        return pd.DataFrame()
 
     rows = []
     for agent_type in df["agent0_type"].unique():
         agent_df = df[df["agent0_type"] == agent_type]
 
         # Dev performance (not held-out)
-        dev_df = agent_df[~agent_df["opponent_family_1"].isin(held_out_families)]
-        held_df = agent_df[agent_df["opponent_family_1"].isin(held_out_families)]
+        dev_df = agent_df[~agent_df[family_col].isin(held_out_families)]
+        held_df = agent_df[agent_df[family_col].isin(held_out_families)]
+
+        if len(dev_df) == 0 or len(held_df) == 0:
+            continue
 
         dev_mean = float(dev_df["terminal_reward_0"].mean()) if len(dev_df) > 0 else 0.0
         held_mean = float(held_df["terminal_reward_0"].mean()) if len(held_df) > 0 else 0.0
@@ -218,6 +225,82 @@ def compute_robustness_metrics(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     return pd.DataFrame(rows) if rows else pd.DataFrame()
+
+
+def compute_switch_case_metrics(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute per-seed and aggregate metrics for the hidden-switch case study."""
+    if df.empty or "matchup_label" not in df.columns or "phase" not in df.columns:
+        return pd.DataFrame(), pd.DataFrame()
+
+    adaptive_label = "adaptive_counter_vs_hidden_switch"
+    control_label = "balanced_control_vs_hidden_switch"
+    adaptive_df = df[df["matchup_label"] == adaptive_label]
+    control_df = df[df["matchup_label"] == control_label]
+    if adaptive_df.empty or control_df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    rows = []
+    for seed in sorted(adaptive_df["seed"].unique()):
+        adaptive_seed = adaptive_df[adaptive_df["seed"] == seed]
+        control_seed = control_df[control_df["seed"] == seed]
+        if adaptive_seed.empty or control_seed.empty:
+            continue
+
+        switch_hand = int(adaptive_seed["switch_hand"].dropna().iloc[0])
+        true_post = adaptive_seed["true_family_post"].dropna().iloc[0]
+        detected_candidates = adaptive_seed["detected_family"].dropna()
+        detection_candidates = adaptive_seed["detection_hand"].dropna()
+        detected_family = detected_candidates.iloc[-1] if not detected_candidates.empty else None
+        detection_hand = int(detection_candidates.iloc[-1]) if not detection_candidates.empty else None
+        false_switch = bool(detection_hand is not None and detection_hand < switch_hand)
+        family_correct = bool(detected_family == true_post) if detected_family is not None else False
+        switched = bool(adaptive_seed["responder_switched"].eq(True).any())
+
+        pre_adaptive = float(adaptive_seed[adaptive_seed["phase"] == "pre_switch"]["terminal_reward_0"].mean())
+        post_adaptive = float(adaptive_seed[adaptive_seed["phase"] == "post_switch"]["terminal_reward_0"].mean())
+        pre_control = float(control_seed[control_seed["phase"] == "pre_switch"]["terminal_reward_0"].mean())
+        post_control = float(control_seed[control_seed["phase"] == "post_switch"]["terminal_reward_0"].mean())
+
+        rows.append(
+            {
+                "seed": seed,
+                "switch_hand": switch_hand,
+                "true_family_post": true_post,
+                "detected_family": detected_family,
+                "detection_hand": detection_hand,
+                "detection_delay": (detection_hand - switch_hand) if detection_hand is not None else np.nan,
+                "false_switch": false_switch,
+                "family_identification_correct": family_correct,
+                "responder_switched": switched,
+                "pre_adaptive_reward": pre_adaptive,
+                "post_adaptive_reward": post_adaptive,
+                "pre_control_reward": pre_control,
+                "post_control_reward": post_control,
+                "post_switch_lift_vs_control": post_adaptive - post_control,
+            }
+        )
+
+    per_seed = pd.DataFrame(rows)
+    if per_seed.empty:
+        return per_seed, pd.DataFrame()
+
+    summary = pd.DataFrame(
+        [
+            {
+                "n_seeds": len(per_seed),
+                "mean_switch_hand": per_seed["switch_hand"].mean(),
+                "mean_pre_adaptive_reward": per_seed["pre_adaptive_reward"].mean(),
+                "mean_post_adaptive_reward": per_seed["post_adaptive_reward"].mean(),
+                "mean_post_control_reward": per_seed["post_control_reward"].mean(),
+                "mean_post_switch_lift_vs_control": per_seed["post_switch_lift_vs_control"].mean(),
+                "detection_rate": per_seed["responder_switched"].mean(),
+                "family_identification_accuracy": per_seed["family_identification_correct"].mean(),
+                "false_switch_rate": per_seed["false_switch"].mean(),
+                "mean_detection_delay": per_seed["detection_delay"].dropna().mean(),
+            }
+        ]
+    )
+    return per_seed, summary
 
 
 def plot_performance_comparison(summary: pd.DataFrame, output_path: str):
@@ -500,7 +583,9 @@ def generate_all_tables(results_dir: str, output_dir: str):
                     f.write(_df_to_latex(perf, caption=f"Agent Performance — {experiment_id}"))
 
         # Robustness table
-        if "agent0_type" in df.columns and "opponent_family_1" in df.columns:
+        if "agent0_type" in df.columns and (
+            "opponent_family_1" in df.columns or "behavior_family_1" in df.columns
+        ):
             rob = compute_robustness_metrics(df)
             if not rob.empty:
                 rob_csv = os.path.join(output_dir, f"{experiment_id}_robustness.csv")
@@ -509,6 +594,21 @@ def generate_all_tables(results_dir: str, output_dir: str):
                 rob_tex = os.path.join(output_dir, f"{experiment_id}_robustness.tex")
                 with open(rob_tex, "w") as f:
                     f.write(_df_to_latex(rob, caption=f"Robustness Metrics — {experiment_id}"))
+
+        if experiment_id == "switch_case_study":
+            case_per_seed, case_summary = compute_switch_case_metrics(df)
+            if not case_per_seed.empty:
+                per_seed_csv = os.path.join(output_dir, "switch_case_study_case_per_seed.csv")
+                case_per_seed.to_csv(per_seed_csv, index=False)
+                per_seed_tex = os.path.join(output_dir, "switch_case_study_case_per_seed.tex")
+                with open(per_seed_tex, "w") as f:
+                    f.write(_df_to_latex(case_per_seed, caption="Switch Case Study — Per-seed metrics"))
+            if not case_summary.empty:
+                summary_csv = os.path.join(output_dir, "switch_case_study_case_summary.csv")
+                case_summary.to_csv(summary_csv, index=False)
+                summary_tex = os.path.join(output_dir, "switch_case_study_case_summary.tex")
+                with open(summary_tex, "w") as f:
+                    f.write(_df_to_latex(case_summary, caption="Switch Case Study — Aggregate metrics"))
 
     print(f"Tables generated in {output_dir}")
 

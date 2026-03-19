@@ -75,6 +75,33 @@ class BaseAgent(ABC):
         """
         pass
 
+    def set_hand_context(
+        self,
+        hand_num: int,
+        seed: int,
+        run_id: str,
+    ) -> None:
+        """Provide per-hand context before a new hand starts.
+
+        Default implementation does nothing. Agents that need cross-hand
+        adaptation metadata can override this hook.
+        """
+        pass
+
+    def set_behavior_family(self, family_name: str) -> None:
+        """Update the agent's active behavior family.
+
+        Default implementation does nothing.
+        """
+        pass
+
+    def set_model_family(self, family_name: str) -> None:
+        """Update the agent's opponent-model family.
+
+        Default implementation does nothing.
+        """
+        pass
+
     def get_ev_table(self) -> Optional[Dict[str, float]]:
         """Return EV table for logging purposes.
 
@@ -87,6 +114,18 @@ class BaseAgent(ABC):
 
         Default returns None. Belief agents override this.
         """
+        return None
+
+    def get_behavior_family(self) -> Optional[str]:
+        """Return the agent's active behavior family, if applicable."""
+        return None
+
+    def get_model_family(self) -> Optional[str]:
+        """Return the agent's current opponent-model family, if applicable."""
+        return None
+
+    def get_detection_state(self) -> Optional[Dict[str, object]]:
+        """Return optional adaptation metadata for logging."""
         return None
 
     def __repr__(self) -> str:

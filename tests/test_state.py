@@ -13,8 +13,10 @@ def make_test_state(pot=100, stack=200, street="turn", last_bet=0):
         board=["Ah", "Kd", "Qc", "2s"],
         hole_cards_0=("Jh", "Ts"),
         hole_cards_1=("9d", "8c"),
-        starting_pot=pot,
-        effective_stack=stack,
+        effective_stack=stack + (pot // 2),
+        starting_commitment_0=pot // 2,
+        starting_commitment_1=pot // 2,
+        first_to_act=0,
         street=street,
     )
 
