@@ -1,6 +1,6 @@
 # PokerBeliefStudy
 
-A research-grade Python repository studying Bayesian belief updating in heads-up poker, with a paired hidden-switch case study for adaptive response.
+A Python simulation study of Bayesian belief updating in heads-up poker: does an agent that updates its beliefs about the opponent's hand after every action beat agents with fixed rules or fixed priors? It also includes a paired hidden-switch case study, in which the opponent changes style mid-match, to test adaptive response.
 
 ## Project Overview
 
@@ -19,8 +19,8 @@ PokerBeliefStudy investigates whether an agent that maintains and updates a Baye
 ### Installation
 
 ```bash
-# Clone or download the repository
-cd Poker_Belief_Study
+git clone https://github.com/kevinmsong/PokerBeliefStudy.git
+cd PokerBeliefStudy
 
 # Install dependencies
 pip install -r requirements.txt
